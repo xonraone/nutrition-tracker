@@ -1,0 +1,1753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NutriTrack - Nutrition Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0D0F14; color: #F0F0F0; font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+    input, button { font-family: inherit; }
+    button { border: none; cursor: pointer; }
+    input { outline: none; }
+
+    .hidden { display: none !important; }
+
+    /* LOGIN PAGE */
+    #login-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .login-box {
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+    }
+    .logo {
+      font-size: 32px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #FF6B35, #FFB347);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+    }
+    .subtitle { color: rgba(255,255,255,0.4); font-size: 14px; margin-bottom: 40px; }
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .input-field {
+      background: rgba(255,255,255,0.06);
+      border: 1.5px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: #F0F0F0;
+      font-size: 15px;
+      width: 100%;
+      transition: border-color 0.2s;
+    }
+    .input-field:focus { border-color: #FF6B35; }
+    .input-field::placeholder { color: rgba(255,255,255,0.3); }
+    .error-msg { color: #FF6B6B; font-size: 13px; min-height: 20px; }
+    .btn-primary {
+      background: linear-gradient(135deg, #FF6B35, #FF8C60);
+      color: white;
+      border-radius: 12px;
+      padding: 12px 24px;
+      font-weight: 600;
+      font-size: 15px;
+      transition: all 0.2s;
+      width: 100%;
+    }
+    .btn-primary:hover { filter: brightness(1.1); }
+
+    /* MAIN APP */
+    #app-page { padding: 24px 16px 80px; }
+    .container { max-width: 900px; margin: 0 auto; }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .logout-btn {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.5);
+      border-radius: 10px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 24px;
+    }
+    .tab {
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 14px;
+      background: transparent;
+      color: rgba(255,255,255,0.4);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+    .tab.active { background: rgba(255,107,53,0.15); color: #FF6B35; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* CALENDAR */
+    .calendar {
+      background: rgba(255,107,53,0.06);
+      border: 1px solid rgba(255,107,53,0.18);
+      border-radius: 16px;
+      padding: 10px 12px;
+      margin-bottom: 20px;
+    }
+    .calendar-toggle {
+      background: none;
+      border: none;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      cursor: pointer;
+      color: inherit;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .calendar-arrow {
+      color: rgba(255,255,255,0.3);
+      font-size: 20px;
+      font-weight: 900;
+      transition: transform 0.2s;
+    }
+    .calendar-arrow.open { transform: rotate(180deg); }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 1px;
+      margin-top: 8px;
+    }
+    .cal-header {
+      text-align: center;
+      font-size: 12px;
+      color: rgba(255,255,255,0.25);
+      font-weight: 700;
+      padding: 1px 0;
+    }
+    .cal-day {
+      text-align: center;
+      padding: 4px 2px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      background: transparent;
+      color: rgba(255,255,255,0.4);
+      transition: background 0.15s;
+    }
+    .cal-day:hover { background: rgba(255,107,53,0.15); }
+    .cal-day.today { color: #FF6B35; background: rgba(255,107,53,0.18); border: 1px solid rgba(255,107,53,0.5); font-weight: 800; }
+    .cal-day.logged { color: #F0F0F0; background: rgba(255,107,53,0.1); }
+    .cal-day.future { color: rgba(255,255,255,0.15); cursor: default; }
+    .cal-dot { width: 3px; height: 3px; border-radius: 50%; background: #FF6B35; margin-top: 1px; }
+
+    /* STEPS */
+    .step-counter {
+      background: rgba(99,179,237,0.07);
+      border: 1px solid rgba(99,179,237,0.2);
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+    }
+    .step-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .step-title { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13px; }
+    .step-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .progress-container { flex: 1; }
+    .progress-bar {
+      height: 8px;
+      background: rgba(99,179,237,0.12);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #63B3ED, #4ECDC4);
+      transition: width 0.6s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .step-stats { font-size: 11px; color: rgba(255,255,255,0.35); display: flex; justify-content: space-between; }
+    .step-percent { text-align: right; }
+    .step-percent-big { font-size: 16px; font-weight: 900; color: #63B3ED; }
+    .step-km { font-size: 10px; color: rgba(255,255,255,0.35); }
+
+    /* MACROS */
+    .macro-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .macro-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 10px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .macro-chart {
+      width: 56px;
+      height: 56px;
+      position: relative;
+    }
+    .macro-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 14px; }
+    .macro-value { font-size: 14px; font-weight: 700; line-height: 1.1; }
+    .macro-label { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.6); }
+    .macro-percent { font-size: 9px; color: rgba(255,255,255,0.3); }
+
+    /* FOOD LOG */
+    .section-title { font-size: 16px; font-weight: 600; color: rgba(255,255,255,0.6); margin: 20px 0 12px; }
+    .log-item {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .log-item-info { flex: 1; }
+    .log-item-name { font-weight: 600; font-size: 15px; margin-bottom: 6px; }
+    .log-item-time { color: rgba(255,255,255,0.3); font-size: 12px; display: inline-block; margin-left: 10px; }
+    .log-item-nutrients { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; }
+    .log-delete { background: rgba(255,100,100,0.1); border: 1px solid rgba(255,100,100,0.2); color: #FF6B6B; border-radius: 8px; padding: 6px 10px; font-size: 13px; }
+    .empty-state { text-align: center; padding: 48px 0; color: rgba(255,255,255,0.2); }
+
+    /* MODAL */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.82);
+      z-index: 300;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      background: #161920;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 24px;
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .modal-title { font-weight: 700; font-size: 18px; }
+    .modal-close { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5); border-radius: 8px; width: 32px; height: 32px; font-size: 16px; }
+    .form-group { margin-bottom: 12px; }
+    .form-label { font-size: 12px; font-weight: 500; display: block; margin-bottom: 5px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .btn-primary-modal {
+      background: linear-gradient(135deg, #FF6B35, #FF8C60);
+      color: white;
+      border-radius: 12px;
+      padding: 12px 24px;
+      font-weight: 600;
+      font-size: 15px;
+      width: 100%;
+      margin-top: 12px;
+    }
+
+    /* BUTTON */
+    .btn-log {
+      width: 100%;
+      background: linear-gradient(135deg, #FF6B35, #FF8C60);
+      color: white;
+      border-radius: 12px;
+      padding: 12px 24px;
+      font-weight: 600;
+      font-size: 15px;
+      margin-bottom: 20px;
+    }
+
+    /* SETTINGS */
+    .goal-item {
+      background: rgba(255,255,255,0.03);
+      border-radius: 14px;
+      padding: 16px 20px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .goal-label { display: flex; align-items: center; gap: 10px; }
+    .goal-controls { display: flex; align-items: center; gap: 6px; }
+    .goal-input { width: 76px; background: rgba(255,255,255,0.07); border: 1.5px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 5px 8px; color: #F0F0F0; font-size: 15px; font-weight: 800; text-align: center; }
+    .goal-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: #F0F0F0; border-radius: 8px; width: 30px; height: 30px; font-size: 17px; font-weight: 700; }
+
+    @media (max-width: 768px) {
+      .macro-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <!-- LOGIN PAGE -->
+  <div id="login-page">
+    <div class="login-box">
+      <div class="logo">🥗 NutriTrack</div>
+      <div class="subtitle">Track your daily nutrition</div>
+      <div class="auth-form">
+        <input type="text" id="auth-username" class="input-field" placeholder="Username">
+        <input type="password" id="auth-password" class="input-field" placeholder="Password">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+          <input type="checkbox" id="save-credentials" style="width: 16px; height: 16px; cursor: pointer;">
+          <label for="save-credentials" style="font-size: 13px; color: rgba(255,255,255,0.5); cursor: pointer;">Save credentials</label>
+        </div>
+        <div class="error-msg" id="auth-error"></div>
+        <button type="button" class="btn-primary" id="auth-toggle">Sign Up</button>
+        <button type="button" class="btn-primary" id="auth-submit">Log In</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="app-page" class="hidden">
+    <div class="container">
+      <div class="header">
+        <div>
+          <div class="logo">🥗 NutriTrack</div>
+          <div id="user-greeting" style="font-size: 14px; color: rgba(255,255,255,0.5); margin-top: 4px;"></div>
+        </div>
+        <button class="logout-btn" onclick="logout()">Log out</button>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('today')"><span>🍽️</span>Today</button>
+        <button class="tab" onclick="switchTab('history')"><span>📅</span>History</button>
+        <button class="tab" onclick="switchTab('settings')"><span>⚙️</span>Settings</button>
+      </div>
+
+      <!-- TODAY TAB -->
+      <div id="today-tab" class="tab-content active">
+        <div class="calendar" id="calendar"></div>
+        <div class="step-counter" id="step-counter"></div>
+        <div style="margin-bottom: 24px;">
+          <h3 style="font-size: 13px; font-weight: 700; margin-bottom: 12px; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.5px;">Today's Macros</h3>
+          <div class="macro-grid" id="macro-grid"></div>
+        </div>
+        <div style="margin-bottom: 24px;">
+          <h3 style="font-size: 13px; font-weight: 700; margin-bottom: 12px; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.5px;">Weekly Averages (Sun-Sat)</h3>
+          <div class="macro-grid" id="weekly-macro-grid"></div>
+        </div>
+        <button class="btn-log" onclick="openModal('food-modal')">+ Log Food</button>
+        <h2 class="section-title">TODAY'S LOG</h2>
+        <div id="today-log"></div>
+      </div>
+
+      <!-- HISTORY TAB -->
+      <div id="history-tab" class="tab-content">
+        <h2 class="section-title">HISTORY</h2>
+        <div id="history-log"></div>
+      </div>
+
+      <!-- SETTINGS TAB -->
+      <div id="settings-tab" class="tab-content">
+        <h2 class="section-title">DAILY GOALS</h2>
+        <div id="settings-form"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOD MODAL -->
+  <div id="food-modal" class="modal" onclick="if(event.target===this)closeModal('food-modal')">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Log Food</div>
+        <button class="modal-close" onclick="closeModal('food-modal')">✕</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Select or search saved food</label>
+        <div style="position: relative;">
+          <input type="text" id="saved-food-search" class="input-field" placeholder="Search or select saved food..." oninput="filterSavedFoods(this.value)" style="width: 100%;">
+          <div id="food-suggestions" style="position: absolute; top: 100%; left: 0; right: 0; background: #161920; border: 1px solid rgba(255,255,255,0.1); border-top: none; border-radius: 0 0 12px 12px; max-height: 200px; overflow-y: auto; z-index: 1000; display: none;">
+          </div>
+        </div>
+      </div>
+      <button type="button" onclick="openBarcodeScanner()" style="width: 100%; background: rgba(99,179,237,0.15); border: 1px solid rgba(99,179,237,0.3); color: #63B3ED; border-radius: 10px; padding: 10px; font-weight: 600; margin-bottom: 12px; cursor: pointer; font-size: 14px;">📱 Scan Barcode</button>
+      <div class="form-group">
+        <label class="form-label">Food name *</label>
+        <input type="text" id="food-name" class="input-field" placeholder="e.g. Chicken breast">
+      </div>
+      <div class="form-group">
+        <label class="form-label">📊 Servings</label>
+        <select id="food-serves" class="input-field" onchange="updateServes()" style="cursor: pointer; color: #F0F0F0; background-color: rgba(255,255,255,0.08); font-weight: 500;">
+          <option value="0.25" style="background-color: #0D0F14; color: #F0F0F0;">1/4 serving</option>
+          <option value="0.33" style="background-color: #0D0F14; color: #F0F0F0;">1/3 serving</option>
+          <option value="0.5" style="background-color: #0D0F14; color: #F0F0F0;">1/2 serving</option>
+          <option value="0.66" style="background-color: #0D0F14; color: #F0F0F0;">2/3 serving</option>
+          <option value="0.75" style="background-color: #0D0F14; color: #F0F0F0;">3/4 serving</option>
+          <option value="1" selected style="background-color: #0D0F14; color: #F0F0F0;">1 serving</option>
+          <option value="1.5" style="background-color: #0D0F14; color: #F0F0F0;">1.5 servings</option>
+          <option value="2" style="background-color: #0D0F14; color: #F0F0F0;">2 servings</option>
+          <option value="2.5" style="background-color: #0D0F14; color: #F0F0F0;">2.5 servings</option>
+          <option value="3" style="background-color: #0D0F14; color: #F0F0F0;">3 servings</option>
+          <option value="custom" style="background-color: #0D0F14; color: #F0F0F0;">Custom amount</option>
+        </select>
+        <input type="number" id="food-serves-custom" class="input-field" placeholder="Enter custom servings (e.g. 1.25)" style="display: none; margin-top: 6px;" oninput="updateServes()">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">🔥 Calories (kcal) <span style="color: rgba(255,255,255,0.4); font-size: 11px;">auto-calculated</span></label>
+          <input type="number" id="food-calories" class="input-field" placeholder="0" readonly style="background: rgba(255,255,255,0.03); cursor: not-allowed;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">💪 Protein (g)</label>
+          <input type="number" id="food-protein" class="input-field" placeholder="0" oninput="calculateCalories()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">🌾 Carbs (g)</label>
+          <input type="number" id="food-carbs" class="input-field" placeholder="0" oninput="calculateCalories()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">🥑 Fat (g)</label>
+          <input type="number" id="food-fat" class="input-field" placeholder="0" oninput="calculateCalories()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">🌿 Fiber (g)</label>
+          <input type="number" id="food-fiber" class="input-field" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">🍬 Sugar (g)</label>
+          <input type="number" id="food-sugar" class="input-field" placeholder="0">
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+        <input type="checkbox" id="save-food-checkbox" style="width: 16px; height: 16px; cursor: pointer;">
+        <label for="save-food-checkbox" style="font-size: 13px; color: rgba(255,255,255,0.6); cursor: pointer;">Save this food for future use</label>
+      </div>
+      <button class="btn-primary-modal" onclick="addFood()">Add to Log</button>
+    </div>
+  </div>
+
+  <!-- BARCODE SCANNER MODAL -->
+  <div id="barcode-modal" class="modal" onclick="if(event.target===this)closeBarcodeScanner()">
+    <div class="modal-content" style="max-width: 400px;">
+      <div class="modal-header">
+        <div class="modal-title">Scan Barcode</div>
+        <button class="modal-close" onclick="closeBarcodeScanner()">✕</button>
+      </div>
+      <div id="barcode-scanner-container" style="width: 100%; height: 300px; background: #0a0a0a; border-radius: 12px; overflow: hidden; margin-bottom: 12px; position: relative;">
+        <video id="barcode-video" style="width: 100%; height: 100%; object-fit: cover;"></video>
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 3px solid rgba(255,107,53,0.5); width: 80%; aspect-ratio: 1; border-radius: 12px;"></div>
+      </div>
+      <div id="barcode-status" style="text-align: center; color: rgba(255,255,255,0.6); font-size: 13px; margin-bottom: 12px;">Point camera at barcode...</div>
+      <button type="button" onclick="closeBarcodeScanner()" style="width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); border-radius: 10px; padding: 10px; font-weight: 600;">Close Scanner</button>
+    </div>
+  </div>
+
+  <!-- STEP MODAL -->
+  <div id="step-modal" class="modal" onclick="if(event.target===this)closeModal('step-modal')">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Edit Steps</div>
+        <button class="modal-close" onclick="closeModal('step-modal')">✕</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Steps for today</label>
+        <input type="number" id="step-input-modal" class="input-field" placeholder="0">
+      </div>
+      <button class="btn-primary-modal" onclick="saveStepModal()">Save Steps</button>
+    </div>
+  </div>
+
+  <!-- DAY STEP MODAL -->
+  <div id="day-step-modal" class="modal" onclick="if(event.target===this)closeModal('day-step-modal')">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Edit Steps</div>
+        <button class="modal-close" onclick="closeModal('day-step-modal')">✕</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Steps for this day</label>
+        <input type="number" id="day-step-input-modal" class="input-field" placeholder="0">
+      </div>
+      <button class="btn-primary-modal" onclick="saveDayStepsModal()">Save Steps</button>
+    </div>
+  </div>
+
+  <!-- ADD DAY MODAL -->
+  <div id="add-day-modal" class="modal" onclick="if(event.target===this)closeModal('add-day-modal')">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Add Day</div>
+        <button class="modal-close" onclick="closeModal('add-day-modal')">✕</button>
+      </div>
+      <div id="add-day-content"></div>
+    </div>
+  </div>
+
+  <!-- VIEW DAY MODAL -->
+  <div id="view-day-modal" class="modal" onclick="if(event.target===this)closeModal('view-day-modal')">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Day Log</div>
+        <button class="modal-close" onclick="closeModal('view-day-modal')">✕</button>
+      </div>
+      <div id="view-day-content"></div>
+    </div>
+  </div>
+
+  <!-- EDIT DAY MODAL -->
+  <div id="edit-day-modal" class="modal" onclick="if(event.target===this)closeModal('edit-day-modal')">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Edit Day</div>
+        <button class="modal-close" onclick="closeEditDay()">✕</button>
+      </div>
+      <div id="edit-day-modal-content"></div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'nutritrack_v2';
+    const NUTRIENTS = [
+      { key: 'calories', label: 'Calories', unit: 'kcal', color: '#FF6B35', icon: '🔥' },
+      { key: 'protein', label: 'Protein', unit: 'g', color: '#4ECDC4', icon: '💪' },
+      { key: 'carbs', label: 'Carbs', unit: 'g', color: '#FFE66D', icon: '🌾' },
+      { key: 'fat', label: 'Fat', unit: 'g', color: '#A8E6CF', icon: '🥑' },
+      { key: 'fiber', label: 'Fiber', unit: 'g', color: '#C9B8FF', icon: '🌿' },
+      { key: 'sugar', label: 'Sugar', unit: 'g', color: '#FFB3BA', icon: '🍬' }
+    ];
+    const DEFAULT_GOALS = { calories: 2000, protein: 150, carbs: 250, fat: 65, fiber: 30, sugar: 50, steps: 10000 };
+
+    let app = {
+      user: null,
+      mode: 'login', // 'login' or 'signup'
+      data: {}
+    };
+
+    function load() {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) app.data = JSON.parse(stored);
+      render();
+    }
+
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(app.data));
+    }
+
+    function render() {
+      if (!app.user) renderLogin();
+      else renderApp();
+    }
+
+    function renderLogin() {
+      document.getElementById('login-page').classList.remove('hidden');
+      document.getElementById('app-page').classList.add('hidden');
+      document.getElementById('auth-toggle').textContent = app.mode === 'login' ? 'Sign Up' : 'Have an account? Log In';
+      document.getElementById('auth-submit').textContent = app.mode === 'login' ? 'Log In' : 'Create Account';
+      
+      // Load saved credentials
+      const saved = localStorage.getItem('nutritrack_saved_login');
+      if (saved) {
+        try {
+          const creds = JSON.parse(saved);
+          document.getElementById('auth-username').value = creds.username || '';
+          document.getElementById('auth-password').value = creds.password || '';
+          document.getElementById('save-credentials').checked = true;
+        } catch (e) {
+          // Invalid saved data, ignore
+        }
+      }
+    }
+
+    function renderApp() {
+      document.getElementById('login-page').classList.add('hidden');
+      document.getElementById('app-page').classList.remove('hidden');
+      document.getElementById('user-greeting').textContent = `Hi ${app.user}, welcome back!`;
+      renderCalendar();
+      renderSteps();
+      renderMacros();
+      renderLog();
+    }
+
+    function renderCalendar() {
+      const today = getTodayKey();
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      const monthName = now.toLocaleString('default', { month: 'long' });
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const loggedDays = new Set();
+      
+      const userData = app.data[app.user] || {};
+      Object.keys(userData.log || {}).forEach(date => {
+        if ((userData.log[date] || []).length > 0) loggedDays.add(date);
+      });
+
+      let html = `
+        <button class="calendar-toggle" onclick="toggleCalendar()">
+          <span>📅 ${monthName} ${year}</span>
+          <span class="calendar-arrow" id="cal-arrow">⌄</span>
+        </button>
+        <div id="calendar-grid" class="calendar-grid" style="display:none; margin-top: 8px;">
+      `;
+
+      ['S','M','T','W','T','F','S'].forEach(d => {
+        html += `<div class="cal-header">${d}</div>`;
+      });
+
+      for (let i = 0; i < firstDay; i++) html += '<div></div>';
+      
+      for (let d = 1; d <= daysInMonth; d++) {
+        const date = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const isToday = date === today;
+        const hasLog = loggedDays.has(date);
+        const isFuture = date > today;
+        
+        let cls = 'cal-day';
+        if (isToday) cls += ' today';
+        else if (hasLog) cls += ' logged';
+        else if (isFuture) cls += ' future';
+        
+        const clickHandler = !isFuture ? `onclick="viewDayLog('${date}')"` : '';
+        
+        html += `<button class="${cls}" ${clickHandler}>${d}${hasLog ? '<div class="cal-dot"></div>' : ''}</button>`;
+      }
+
+      html += '</div>';
+      document.getElementById('calendar').innerHTML = html;
+    }
+
+    function editDay(date) {
+      app.editingDate = date;
+      const userData = app.data[app.user] || {};
+      const goals = { ...DEFAULT_GOALS, ...userData.goals };
+      const log = (userData.log || {})[date] || [];
+      const steps = (userData.steps || {})[date] || 0;
+
+      // Format date
+      const dateObj = new Date(date + 'T00:00:00');
+      const dayName = dateObj.toLocaleString('default', { weekday: 'long' });
+      const monthDay = dateObj.toLocaleString('default', { month: 'short', day: 'numeric' });
+      const year = dateObj.getFullYear();
+      const formattedDate = `${dayName}, ${monthDay} ${year}`;
+
+      const totals = {};
+      NUTRIENTS.forEach(n => totals[n.key] = 0);
+      log.forEach(entry => {
+        NUTRIENTS.forEach(n => {
+          totals[n.key] += parseFloat(entry[n.key]) || 0;
+        });
+      });
+
+      let html = `
+        <div style="margin-bottom: 20px;">
+          <h3 style="font-size: 16px; margin-bottom: 10px;">Editing: ${formattedDate}</h3>
+          <div style="background: rgba(99,179,237,0.07); border: 1px solid rgba(99,179,237,0.2); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="font-weight: 600;">Steps: ${steps.toLocaleString()}</span>
+              <button onclick="openEditDayStepsModal()" style="background: rgba(99,179,237,0.12); border: 1px solid rgba(99,179,237,0.25); color: #63B3ED; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 600;">Edit</button>
+            </div>
+            <div style="height: 6px; background: rgba(99,179,237,0.12); border-radius: 3px; overflow: hidden;">
+              <div style="height: 100%; background: linear-gradient(90deg, #63B3ED, #4ECDC4); width: ${Math.min((steps / goals.steps) * 100, 100)}%;"></div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      html += `<h3 style="font-size: 16px; margin-bottom: 12px;">Foods logged: ${log.length}</h3>`;
+
+      if (log.length === 0) {
+        html += '<div style="color: rgba(255,255,255,0.3); text-align: center; padding: 20px;">No foods logged</div>';
+      } else {
+        html += '<div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">';
+        log.forEach(entry => {
+          html += `
+            <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-weight: 600; font-size: 14px;">${entry.name}</div>
+                <div style="font-size: 11px; color: rgba(255,255,255,0.3);">${Math.round(entry.calories)} kcal</div>
+              </div>
+              <button onclick="deleteSpecificFood(${entry.id}, '${app.editingDate}')" style="background: rgba(255,100,100,0.1); border: 1px solid rgba(255,100,100,0.2); color: #FF6B6B; border-radius: 6px; padding: 4px 8px; font-size: 11px;">✕</button>
+            </div>
+          `;
+        });
+        html += '</div>';
+      }
+
+      html += `<button onclick="addFoodToDay('${date}')" style="width: 100%; background: rgba(255,107,53,0.15); border: 1px solid rgba(255,107,53,0.3); color: #FF6B35; border-radius: 10px; padding: 10px; font-weight: 600; margin-bottom: 16px;">+ Add Food to ${formattedDate}</button>`;
+      html += `<button onclick="closeEditDay()" style="width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); border-radius: 10px; padding: 10px; font-weight: 600;">Close</button>`;
+
+      document.getElementById('history-log').innerHTML = html;
+    }
+
+    function openEditDayStepsModal() {
+      closeModal('edit-day-modal');
+      const userData = app.data[app.user] || {};
+      const steps = (userData.steps || {})[app.editingDate] || 0;
+      document.getElementById('day-step-input-modal').value = steps;
+      openModal('day-step-modal');
+      setTimeout(() => document.getElementById('day-step-input-modal').focus(), 100);
+    }
+
+    function saveDayStepsModal() {
+      const val = document.getElementById('day-step-input-modal').value;
+      const userData = app.data[app.user];
+      if (!userData.steps) userData.steps = {};
+      userData.steps[app.editingDate] = Math.max(0, parseInt(val) || 0);
+      save();
+      closeModal('day-step-modal');
+      editDayFromView(app.editingDate);
+    }
+
+    function deleteSpecificFood(id, date) {
+      const userData = app.data[app.user];
+      userData.log[date] = userData.log[date].filter(e => e.id !== id);
+      save();
+      editDayFromView(date);
+    }
+
+    function addFoodToDay(date) {
+      app.editingDate = date;
+      closeModal('edit-day-modal');
+      openModal('food-modal');
+    }
+
+    function closeEditDay() {
+      renderHistory();
+    }
+
+    function viewDayLog(date) {
+      const userData = app.data[app.user] || {};
+      const log = (userData.log || {})[date] || [];
+      const steps = (userData.steps || {})[date] || 0;
+      const goals = { ...DEFAULT_GOALS, ...userData.goals };
+
+      // Format date
+      const dateObj = new Date(date + 'T00:00:00');
+      const dayName = dateObj.toLocaleString('default', { weekday: 'long' });
+      const monthDay = dateObj.toLocaleString('default', { month: 'short', day: 'numeric' });
+      const year = dateObj.getFullYear();
+      const formattedDate = `${dayName}, ${monthDay} ${year}`;
+
+      const totals = {};
+      NUTRIENTS.forEach(n => totals[n.key] = 0);
+      log.forEach(entry => {
+        NUTRIENTS.forEach(n => {
+          totals[n.key] += parseFloat(entry[n.key]) || 0;
+        });
+      });
+
+      let html = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 style="font-size: 16px;">${formattedDate}</h3>
+          <button onclick="editDayFromView('${date}')" style="background: rgba(255,107,53,0.15); border: 1px solid rgba(255,107,53,0.3); color: #FF6B35; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 600;">Edit</button>
+        </div>
+        
+        <div style="background: rgba(99,179,237,0.07); border: 1px solid rgba(99,179,237,0.2); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-weight: 600;">👟 Steps: ${steps.toLocaleString()} / ${goals.steps.toLocaleString()}</span>
+            <span style="font-size: 11px; color: rgba(255,255,255,0.3);">${((steps / goals.steps) * 100).toFixed(0)}%</span>
+          </div>
+          <div style="height: 6px; background: rgba(99,179,237,0.12); border-radius: 3px; overflow: hidden;">
+            <div style="height: 100%; background: linear-gradient(90deg, #63B3ED, #4ECDC4); width: ${Math.min((steps / goals.steps) * 100, 100)}%;"></div>
+          </div>
+        </div>
+
+        <h4 style="font-size: 13px; margin-bottom: 10px; color: rgba(255,255,255,0.6);">Foods logged: ${log.length}</h4>
+      `;
+
+      if (log.length === 0) {
+        html += '<div style="color: rgba(255,255,255,0.3); text-align: center; padding: 20px;">No foods logged</div>';
+      } else {
+        html += '<div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">';
+        log.forEach(entry => {
+          html += `
+            <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 10px 12px;">
+              <div style="font-weight: 600; font-size: 14px;">${entry.name}</div>
+              <div style="font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 4px;">
+                ${NUTRIENTS.filter(n => entry[n.key] > 0).map(n => `<span style="color: ${n.color}; margin-right: 10px;">${n.icon} ${Math.round(entry[n.key])}${n.unit}</span>`).join('')}
+              </div>
+            </div>
+          `;
+        });
+        html += '</div>';
+      }
+
+      html += `<h4 style="font-size: 13px; margin-bottom: 10px; color: rgba(255,255,255,0.6); margin-top: 16px;">Nutrition Summary</h4>`;
+      html += '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 16px;">';
+      NUTRIENTS.forEach(n => {
+        const val = totals[n.key];
+        const goal = goals[n.key];
+        const pctVal = Math.min((val / goal), 1);
+        const pct = Math.round(pctVal * 100);
+        const dasharray = Math.PI * 44 * pctVal;
+
+        html += `
+          <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; gap: 10px;">
+            <div style="flex: 1;">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <span style="font-size: 16px;">${n.icon}</span>
+                <span style="font-size: 12px; font-weight: 600; color: ${n.color};">${n.label}</span>
+              </div>
+              <div style="font-size: 11px; color: rgba(255,255,255,0.4);">${Math.round(val)} / ${goal}${n.unit}</div>
+              <div style="font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 4px;">${pct}% of goal</div>
+            </div>
+            <div style="position: relative; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <svg width="48" height="48" style="transform: rotate(-90deg);">
+                <circle cx="24" cy="24" r="18" fill="none" stroke="rgba(99,179,237,0.12)" stroke-width="5"/>
+                <circle cx="24" cy="24" r="18" fill="none" stroke="${n.color}" stroke-width="5" stroke-dasharray="${dasharray} ${Math.PI * 36}" stroke-linecap="round" style="transition: stroke-dasharray 0.6s;"/>
+              </svg>
+              <div style="position: absolute; font-size: 12px; font-weight: 700; color: ${n.color};">${pct}%</div>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+
+      document.getElementById('view-day-content').innerHTML = html;
+      openModal('view-day-modal');
+    }
+
+    function editDayFromView(date) {
+      closeModal('view-day-modal');
+      app.editingDate = date;
+      const userData = app.data[app.user] || {};
+      const goals = { ...DEFAULT_GOALS, ...userData.goals };
+      const log = (userData.log || {})[date] || [];
+      const steps = (userData.steps || {})[date] || 0;
+
+      // Format date
+      const dateObj = new Date(date + 'T00:00:00');
+      const dayName = dateObj.toLocaleString('default', { weekday: 'long' });
+      const monthDay = dateObj.toLocaleString('default', { month: 'short', day: 'numeric' });
+      const year = dateObj.getFullYear();
+      const formattedDate = `${dayName}, ${monthDay} ${year}`;
+
+      const totals = {};
+      NUTRIENTS.forEach(n => totals[n.key] = 0);
+      log.forEach(entry => {
+        NUTRIENTS.forEach(n => {
+          totals[n.key] += parseFloat(entry[n.key]) || 0;
+        });
+      });
+
+      let html = `
+        <div style="margin-bottom: 20px;">
+          <h3 style="font-size: 16px; margin-bottom: 10px;">Editing: ${formattedDate}</h3>
+          <div style="background: rgba(99,179,237,0.07); border: 1px solid rgba(99,179,237,0.2); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="font-weight: 600;">Steps: ${steps.toLocaleString()}</span>
+              <button onclick="openEditDayStepsModal()" style="background: rgba(99,179,237,0.12); border: 1px solid rgba(99,179,237,0.25); color: #63B3ED; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 600;">Edit</button>
+            </div>
+            <div style="height: 6px; background: rgba(99,179,237,0.12); border-radius: 3px; overflow: hidden;">
+              <div style="height: 100%; background: linear-gradient(90deg, #63B3ED, #4ECDC4); width: ${Math.min((steps / goals.steps) * 100, 100)}%;"></div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      html += `<h3 style="font-size: 16px; margin-bottom: 12px;">Foods logged: ${log.length}</h3>`;
+
+      if (log.length === 0) {
+        html += '<div style="color: rgba(255,255,255,0.3); text-align: center; padding: 20px;">No foods logged</div>';
+      } else {
+        html += '<div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">';
+        log.forEach(entry => {
+          html += `
+            <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-weight: 600; font-size: 14px;">${entry.name}</div>
+                <div style="font-size: 11px; color: rgba(255,255,255,0.3);">${Math.round(entry.calories)} kcal</div>
+              </div>
+              <button onclick="deleteSpecificFood(${entry.id}, '${app.editingDate}')" style="background: rgba(255,100,100,0.1); border: 1px solid rgba(255,100,100,0.2); color: #FF6B6B; border-radius: 6px; padding: 4px 8px; font-size: 11px;">✕</button>
+            </div>
+          `;
+        });
+        html += '</div>';
+      }
+
+      html += `<button onclick="addFoodToDay('${date}')" style="width: 100%; background: rgba(255,107,53,0.15); border: 1px solid rgba(255,107,53,0.3); color: #FF6B35; border-radius: 10px; padding: 10px; font-weight: 600; margin-bottom: 16px;">+ Add Food to ${formattedDate}</button>`;
+      html += `<button onclick="closeEditDay()" style="width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); border-radius: 10px; padding: 10px; font-weight: 600;">Close</button>`;
+
+      // Open edit modal
+      document.getElementById('edit-day-modal-content').innerHTML = html;
+      openModal('edit-day-modal');
+    }
+
+    function closeEditDay() {
+      closeModal('edit-day-modal');
+      renderCalendar();
+    }
+
+    function toggleCalendar() {
+      const grid = document.getElementById('calendar-grid');
+      const arrow = document.getElementById('cal-arrow');
+      grid.style.display = grid.style.display === 'none' ? 'grid' : 'none';
+      arrow.classList.toggle('open');
+    }
+
+    function renderSteps() {
+      const today = getTodayKey();
+      const userData = app.data[app.user] || {};
+      const goals = { ...DEFAULT_GOALS, ...userData.goals };
+      const steps = (userData.steps || {})[today] || 0;
+      const pct = Math.min(Math.round((steps / goals.steps) * 100), 100);
+      const km = (steps * 0.000762).toFixed(1);
+
+      document.getElementById('step-counter').innerHTML = `
+        <div class="step-header">
+          <div class="step-title"><span>👟</span>Steps Today</div>
+          <button onclick="openStepModal()" style="background: rgba(99,179,237,0.12); border: 1px solid rgba(99,179,237,0.25); color: #63B3ED; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600;">Edit</button>
+        </div>
+        <div class="step-bar">
+          <div class="progress-container">
+            <div class="progress-bar"><div class="progress-fill" style="width: ${pct}%"></div></div>
+            <div class="step-stats">
+              <span>${steps.toLocaleString()} / ${goals.steps.toLocaleString()}</span>
+              <span>${pct}%</span>
+            </div>
+          </div>
+          <div class="step-percent">
+            <div class="step-percent-big">${pct}%</div>
+            <div class="step-km">${km} km</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function openStepModal() {
+      const today = getTodayKey();
+      const userData = app.data[app.user] || {};
+      const steps = (userData.steps || {})[today] || 0;
+      
+      document.getElementById('step-input-modal').value = steps;
+      openModal('step-modal');
+      setTimeout(() => document.getElementById('step-input-modal').focus(), 100);
+    }
+
+    function saveStepModal() {
+      const val = document.getElementById('step-input-modal').value;
+      const today = getTodayKey();
+      const userData = app.data[app.user] || {};
+      if (!userData.steps) userData.steps = {};
+      userData.steps[today] = Math.max(0, parseInt(val) || 0);
+      app.data[app.user] = userData;
+      save();
+      renderSteps();
+      renderMacros();
+      renderCalendar();
+      closeModal('step-modal');
+    }
+
+    function renderMacros() {
+      const today = getTodayKey();
+      const userData = app.data[app.user] || {};
+      const goals = { ...DEFAULT_GOALS, ...userData.goals };
+      const log = (userData.log || {})[today] || [];
+      
+      const totals = {};
+      NUTRIENTS.forEach(n => totals[n.key] = 0);
+      log.forEach(entry => {
+        NUTRIENTS.forEach(n => {
+          totals[n.key] += parseFloat(entry[n.key]) || 0;
+        });
+      });
+
+      let html = '';
+      NUTRIENTS.forEach(n => {
+        const val = totals[n.key];
+        const goal = goals[n.key];
+        const pct = Math.round((val / goal) * 100);
+        const dasharray = Math.PI * 44 * Math.min(val / goal, 1);
+
+        html += `
+          <div class="macro-card">
+            <div class="macro-chart">
+              <svg width="56" height="56" style="transform: rotate(-90deg);">
+                <circle cx="28" cy="28" r="22" fill="none" stroke="rgba(99,179,237,0.12)" stroke-width="6"/>
+                <circle cx="28" cy="28" r="22" fill="none" stroke="${n.color}" stroke-width="6" stroke-dasharray="${dasharray} ${Math.PI*44}" stroke-linecap="round" style="transition: stroke-dasharray 0.6s;"/>
+              </svg>
+              <div class="macro-icon">${n.icon}</div>
+            </div>
+            <div class="macro-value" style="color: ${n.color};">${Math.round(val)}<span style="font-size: 9px; font-weight: 400; color: rgba(255,255,255,0.4);">${n.unit}</span></div>
+            <div class="macro-label">${n.label}</div>
+            <div class="macro-percent">${pct}%</div>
+          </div>
+        `;
+      });
+
+      document.getElementById('macro-grid').innerHTML = html;
+      renderWeeklyMacros();
+    }
+
+    function getWeekDates() {
+      const today = new Date(getTodayKey() + 'T00:00:00');
+      const dayOfWeek = today.getDay();
+      
+      // Calculate Sunday of current week
+      const daysToSunday = dayOfWeek === 0 ? 0 : dayOfWeek;
+      const sunday = new Date(today);
+      sunday.setDate(sunday.getDate() - daysToSunday);
+      
+      const weekDates = [];
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(sunday);
+        date.setDate(date.getDate() + i);
+        const dateStr = date.toISOString().split('T')[0];
+        weekDates.push(dateStr);
+      }
+      
+      return weekDates;
+    }
+
+    function renderWeeklyMacros() {
+      const userData = app.data[app.user] || {};
+      const goals = { ...DEFAULT_GOALS, ...userData.goals };
+      const weekDates = getWeekDates();
+      
+      // Calculate totals for each day of the week
+      const weekTotals = {};
+      NUTRIENTS.forEach(n => weekTotals[n.key] = 0);
+      
+      weekDates.forEach(date => {
+        const log = (userData.log || {})[date] || [];
+        log.forEach(entry => {
+          NUTRIENTS.forEach(n => {
+            weekTotals[n.key] += parseFloat(entry[n.key]) || 0;
+          });
+        });
+      });
+      
+      // Calculate averages
+      const weekAverages = {};
+      NUTRIENTS.forEach(n => {
+        weekAverages[n.key] = weekTotals[n.key] / 7;
+      });
+      
+      let html = '';
+      NUTRIENTS.forEach(n => {
+        const avg = weekAverages[n.key];
+        const goal = goals[n.key];
+        const pct = Math.round((avg / goal) * 100);
+        const dasharray = Math.PI * 44 * Math.min(avg / goal, 1);
+
+        html += `
+          <div class="macro-card" style="opacity: 0.75;">
+            <div class="macro-chart">
+              <svg width="56" height="56" style="transform: rotate(-90deg);">
+                <circle cx="28" cy="28" r="22" fill="none" stroke="rgba(99,179,237,0.12)" stroke-width="6"/>
+                <circle cx="28" cy="28" r="22" fill="none" stroke="${n.color}" stroke-width="6" stroke-dasharray="${dasharray} ${Math.PI*44}" stroke-linecap="round" style="transition: stroke-dasharray 0.6s;"/>
+              </svg>
+              <div class="macro-icon">${n.icon}</div>
+            </div>
+            <div class="macro-value" style="color: ${n.color};">${Math.round(avg)}<span style="font-size: 9px; font-weight: 400; color: rgba(255,255,255,0.4);">${n.unit}</span></div>
+            <div class="macro-label">${n.label}</div>
+            <div class="macro-percent">${pct}%</div>
+          </div>
+        `;
+      });
+
+      document.getElementById('weekly-macro-grid').innerHTML = html;
+    }
+
+    function renderLog() {
+      const today = getTodayKey();
+      const userData = app.data[app.user] || {};
+      const log = (userData.log || {})[today] || [];
+
+      if (log.length === 0) {
+        document.getElementById('today-log').innerHTML = '<div class="empty-state"><div style="font-size: 40px;">🍽️</div>No foods logged yet</div>';
+        return;
+      }
+
+      let html = '';
+      [...log].reverse().forEach(entry => {
+        html += `
+          <div class="log-item">
+            <div class="log-item-info">
+              <div class="log-item-name">${entry.name}<span class="log-item-time">${entry.time}</span></div>
+              <div class="log-item-nutrients">
+                ${NUTRIENTS.filter(n => entry[n.key] > 0).map(n => `<span style="color: ${n.color};">${n.icon} ${Math.round(entry[n.key])}${n.unit}</span>`).join('')}
+              </div>
+            </div>
+            <button class="log-delete" onclick="deleteFood(${entry.id})">✕</button>
+          </div>
+        `;
+      });
+
+      document.getElementById('today-log').innerHTML = html;
+    }
+
+    function openBarcodeScanner() {
+      openModal('barcode-modal');
+      startBarcodeScanning();
+    }
+
+    function closeBarcodeScanner() {
+      closeModal('barcode-modal');
+      stopBarcodeScanning();
+    }
+
+    let barcodeStream = null;
+    let barcodeWorker = null;
+
+    function startBarcodeScanning() {
+      const video = document.getElementById('barcode-video');
+      const statusDiv = document.getElementById('barcode-status');
+
+      // Request camera access
+      navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' }
+      }).then(stream => {
+        barcodeStream = stream;
+        video.srcObject = stream;
+        video.setAttribute('playsinline', 'true');
+        video.play();
+        
+        statusDiv.textContent = 'Camera active - scanning...';
+        
+        // Start scanning frames
+        scanBarcodeFrames(video, statusDiv);
+      }).catch(err => {
+        statusDiv.textContent = '❌ Camera access denied. Please allow camera permissions.';
+        console.error('Camera error:', err);
+      });
+    }
+
+    function stopBarcodeScanning() {
+      if (barcodeStream) {
+        barcodeStream.getTracks().forEach(track => track.stop());
+        barcodeStream = null;
+      }
+    }
+
+    function scanBarcodeFrames(video, statusDiv) {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      const scan = () => {
+        if (!barcodeStream) return;
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        
+        if (canvas.width > 0 && canvas.height > 0) {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          
+          // Try to detect barcode using simple edge detection
+          const barcode = detectBarcode(imageData);
+          
+          if (barcode) {
+            searchBarcodeInOpenFoodFacts(barcode, statusDiv);
+            return;
+          }
+        }
+        
+        requestAnimationFrame(scan);
+      };
+      
+      scan();
+    }
+
+    function detectBarcode(imageData) {
+      // Simple barcode detection using pattern matching
+      const data = imageData.data;
+      const width = imageData.width;
+      const height = imageData.height;
+      
+      // Convert to grayscale and detect vertical lines
+      for (let y = Math.floor(height * 0.3); y < Math.floor(height * 0.7); y++) {
+        let barcodeData = '';
+        let lastColor = 0;
+        let count = 0;
+        
+        for (let x = 0; x < width; x++) {
+          const idx = (y * width + x) * 4;
+          const gray = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+          const color = gray > 128 ? 1 : 0;
+          
+          if (color !== lastColor) {
+            barcodeData += count.toString(36);
+            count = 1;
+            lastColor = color;
+          } else {
+            count++;
+          }
+        }
+        
+        // Look for barcode-like patterns
+        if (barcodeData.length > 20 && Math.random() < 0.1) {
+          // Found potential barcode, try to extract numbers
+          const match = extractBarcodeNumbers(barcodeData);
+          if (match) return match;
+        }
+      }
+      
+      return null;
+    }
+
+    function extractBarcodeNumbers(pattern) {
+      // Simple number extraction from pattern
+      // This is a basic implementation - in production you'd use a proper barcode library like QuaggaJS
+      const numbers = pattern.replace(/[^0-9]/g, '');
+      if (numbers.length >= 8) {
+        return numbers.substring(0, 13) || numbers;
+      }
+      return null;
+    }
+
+    function searchBarcodeInOpenFoodFacts(barcode, statusDiv) {
+      statusDiv.textContent = `🔍 Searching for barcode: ${barcode}...`;
+      
+      fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 1 && data.product) {
+            const product = data.product;
+            
+            // Extract nutrition information
+            const name = product.product_name || 'Unknown Product';
+            const calories = product.nutriments?.['energy-kcal'] || 0;
+            const protein = product.nutriments?.proteins || 0;
+            const carbs = product.nutriments?.carbohydrates || 0;
+            const fat = product.nutriments?.fat || 0;
+            const fiber = product.nutriments?.fiber || 0;
+            const sugar = product.nutriments?.sugars || 0;
+            
+            // Fill in the form
+            document.getElementById('food-name').value = name;
+            document.getElementById('food-protein').value = protein.toFixed(1);
+            document.getElementById('food-carbs').value = carbs.toFixed(1);
+            document.getElementById('food-fat').value = fat.toFixed(1);
+            document.getElementById('food-fiber').value = fiber.toFixed(1);
+            document.getElementById('food-sugar').value = sugar.toFixed(1);
+            
+            calculateCalories();
+            
+            statusDiv.textContent = `✅ Found: ${name}`;
+            setTimeout(() => closeBarcodeScanner(), 1500);
+          } else {
+            statusDiv.textContent = `❌ Product not found. Barcode: ${barcode}`;
+          }
+        })
+        .catch(err => {
+          statusDiv.textContent = '❌ Error searching database. Try manual entry.';
+          console.error('API error:', err);
+        });
+    }
+
+    function filterSavedFoods(searchTerm) {
+      const userData = app.data[app.user] || {};
+      const savedFoods = userData.savedFoods || [];
+      const suggestionsDiv = document.getElementById('food-suggestions');
+      
+      if (!searchTerm.trim()) {
+        suggestionsDiv.style.display = 'none';
+        return;
+      }
+      
+      const filteredFoods = savedFoods.filter(food => 
+        food.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      
+      if (filteredFoods.length === 0) {
+        suggestionsDiv.style.display = 'none';
+        return;
+      }
+      
+      suggestionsDiv.innerHTML = '';
+      filteredFoods.forEach((food, idx) => {
+        const originalIdx = savedFoods.findIndex(f => f.name === food.name);
+        const suggestion = document.createElement('div');
+        suggestion.style.cssText = 'padding: 10px 14px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px;';
+        suggestion.textContent = food.name;
+        suggestion.onmouseover = () => suggestion.style.background = 'rgba(255,107,53,0.1)';
+        suggestion.onmouseout = () => suggestion.style.background = 'transparent';
+        suggestion.onclick = () => {
+          document.getElementById('saved-food-search').value = food.name;
+          suggestionsDiv.style.display = 'none';
+          loadSavedFood(originalIdx);
+        };
+        suggestionsDiv.appendChild(suggestion);
+      });
+      
+      suggestionsDiv.style.display = 'block';
+    }
+
+    function renderSavedFoodsDropdown() {
+      // This function is kept for compatibility but the dropdown is now handled by the search input
+      // No action needed here
+    }
+
+    function loadSavedFood(index) {
+      if (index === '' || index === undefined) {
+        return;
+      }
+
+      const userData = app.data[app.user] || {};
+      const savedFoods = userData.savedFoods || [];
+      const food = savedFoods[index];
+
+      if (food) {
+        document.getElementById('food-name').value = food.name;
+        document.getElementById('food-protein').value = food.protein;
+        document.getElementById('food-carbs').value = food.carbs;
+        document.getElementById('food-fat').value = food.fat;
+        document.getElementById('food-fiber').value = food.fiber;
+        document.getElementById('food-sugar').value = food.sugar;
+        document.getElementById('save-food-checkbox').checked = false;
+        calculateCalories();
+      }
+    }
+
+    function updateServes() {
+      const servesSelect = document.getElementById('food-serves');
+      const customInput = document.getElementById('food-serves-custom');
+      
+      if (servesSelect.value === 'custom') {
+        customInput.style.display = 'block';
+      } else {
+        customInput.style.display = 'none';
+      }
+      
+      // Recalculate based on new serves value
+      calculateCalories();
+    }
+
+    function getServesMultiplier() {
+      const servesSelect = document.getElementById('food-serves');
+      const customInput = document.getElementById('food-serves-custom');
+      
+      if (servesSelect.value === 'custom') {
+        return parseFloat(customInput.value) || 1;
+      }
+      return parseFloat(servesSelect.value) || 1;
+    }
+
+    function calculateCalories() {
+      const protein = parseFloat(document.getElementById('food-protein').value) || 0;
+      const carbs = parseFloat(document.getElementById('food-carbs').value) || 0;
+      const fat = parseFloat(document.getElementById('food-fat').value) || 0;
+      const servesMultiplier = getServesMultiplier();
+
+      // Standard calorie calculations: Protein 4 cal/g, Carbs 4 cal/g, Fat 9 cal/g
+      const calories = Math.round(((protein * 4) + (carbs * 4) + (fat * 9)) * servesMultiplier);
+      document.getElementById('food-calories').value = calories;
+    }
+
+    function addFood() {
+      const name = document.getElementById('food-name').value.trim();
+      const calories = parseFloat(document.getElementById('food-calories').value) || 0;
+      const servesMultiplier = getServesMultiplier();
+      
+      if (!name) {
+        alert('Please enter food name');
+        return;
+      }
+
+      const date = app.editingDate || getTodayKey();
+      const userData = app.data[app.user] || { log: {}, steps: {}, goals: {}, savedFoods: [] };
+      if (!userData.log) userData.log = {};
+      if (!userData.log[date]) userData.log[date] = [];
+      if (!userData.savedFoods) userData.savedFoods = [];
+
+      const foodEntry = {
+        id: Date.now(),
+        name,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        calories,
+        protein: (parseFloat(document.getElementById('food-protein').value) || 0) * servesMultiplier,
+        carbs: (parseFloat(document.getElementById('food-carbs').value) || 0) * servesMultiplier,
+        fat: (parseFloat(document.getElementById('food-fat').value) || 0) * servesMultiplier,
+        fiber: (parseFloat(document.getElementById('food-fiber').value) || 0) * servesMultiplier,
+        sugar: (parseFloat(document.getElementById('food-sugar').value) || 0) * servesMultiplier,
+        serves: servesMultiplier
+      };
+
+      userData.log[date].push(foodEntry);
+
+      // Save food if checkbox is checked
+      if (document.getElementById('save-food-checkbox').checked) {
+        const savedFood = {
+          name: foodEntry.name,
+          protein: parseFloat(document.getElementById('food-protein').value) || 0,
+          carbs: parseFloat(document.getElementById('food-carbs').value) || 0,
+          fat: parseFloat(document.getElementById('food-fat').value) || 0,
+          fiber: parseFloat(document.getElementById('food-fiber').value) || 0,
+          sugar: parseFloat(document.getElementById('food-sugar').value) || 0
+        };
+        
+        // Check if food already exists, if not add it
+        const foodExists = userData.savedFoods.some(f => f.name.toLowerCase() === name.toLowerCase());
+        if (!foodExists) {
+          userData.savedFoods.push(savedFood);
+        }
+      }
+
+      app.data[app.user] = userData;
+      save();
+
+      document.getElementById('food-name').value = '';
+      document.getElementById('food-calories').value = '';
+      document.getElementById('food-protein').value = '';
+      document.getElementById('food-carbs').value = '';
+      document.getElementById('food-fat').value = '';
+      document.getElementById('food-fiber').value = '';
+      document.getElementById('food-sugar').value = '';
+      document.getElementById('food-serves').value = '1';
+      document.getElementById('food-serves-custom').value = '';
+      document.getElementById('food-serves-custom').style.display = 'none';
+      document.getElementById('save-food-checkbox').checked = false;
+      document.getElementById('saved-food-search').value = '';
+
+      closeModal('food-modal');
+
+      if (app.editingDate) {
+        editDayFromView(app.editingDate);
+      } else {
+        renderLog();
+        renderMacros();
+      }
+    }
+
+    function deleteFood(id) {
+      const today = getTodayKey();
+      const userData = app.data[app.user];
+      userData.log[today] = userData.log[today].filter(e => e.id !== id);
+      save();
+      renderLog();
+      renderMacros();
+    }
+
+    function openModal(id) {
+      document.getElementById(id).classList.add('active');
+      if (id === 'food-modal') {
+        document.getElementById('saved-food-search').value = '';
+        renderSavedFoodsDropdown();
+      }
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.getElementById(tab + '-tab').classList.add('active');
+      document.querySelectorAll('.tab').forEach((el, i) => {
+        el.classList.remove('active');
+        if (el.textContent.includes(['Today', 'History', 'Settings'][i])) el.classList.add('active');
+      });
+      
+      if (tab === 'history') renderHistory();
+      if (tab === 'settings') renderSettings();
+    }
+
+    function renderHistory() {
+      const userData = app.data[app.user] || {};
+      const log = userData.log || {};
+      const days = Object.keys(log).sort().reverse();
+
+      let html = `
+        <div style="margin-bottom: 20px;">
+          <button onclick="openAddDayModal()" style="width: 100%; background: linear-gradient(135deg, #FF6B35, #FF8C60); color: white; border-radius: 12px; padding: 12px 24px; font-weight: 600; font-size: 15px; border: none; cursor: pointer; margin-bottom: 16px;">+ Add Day</button>
+        </div>
+      `;
+
+      if (days.length === 0) {
+        html += '<div class="empty-state"><div style="font-size: 40px;">📅</div>No history</div>';
+        document.getElementById('history-log').innerHTML = html;
+        return;
+      }
+
+      days.forEach(day => {
+        const entries = log[day] || [];
+        const totals = {};
+        NUTRIENTS.forEach(n => totals[n.key] = 0);
+        entries.forEach(e => {
+          NUTRIENTS.forEach(n => totals[n.key] += parseFloat(e[n.key]) || 0);
+        });
+
+        // Format date with day name
+        const dateObj = new Date(day + 'T00:00:00');
+        const dayName = dateObj.toLocaleString('default', { weekday: 'long' });
+        const monthDay = dateObj.toLocaleString('default', { month: 'short', day: 'numeric' });
+        const year = dateObj.getFullYear();
+        const formattedDate = `${dayName}, ${monthDay} ${year}`;
+
+        // Get steps for this day
+        const daySteps = (userData.steps || {})[day] || 0;
+        const stepGoal = { ...DEFAULT_GOALS, ...userData.goals }.steps;
+        const stepPct = Math.min((daySteps / stepGoal) * 100, 100);
+        const stepKm = (daySteps * 0.000762).toFixed(1);
+
+        html += `
+          <div class="log-item" style="flex-direction: column; align-items: flex-start;">
+            <div style="margin-bottom: 12px; width: 100%; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <strong style="font-size: 15px;">${formattedDate}</strong>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <span style="color: rgba(255,255,255,0.3);">${entries.length} item${entries.length !== 1 ? 's' : ''}</span>
+                <button onclick="editDay('${day}')" style="background: rgba(255,107,53,0.15); border: 1px solid rgba(255,107,53,0.3); color: #FF6B35; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 600;">Edit</button>
+              </div>
+            </div>
+            <div style="width: 100%; margin-bottom: 12px; background: rgba(99,179,237,0.07); border: 1px solid rgba(99,179,237,0.2); border-radius: 10px; padding: 10px 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="font-size: 12px; font-weight: 600;">👟 Steps: ${daySteps.toLocaleString()} / ${stepGoal.toLocaleString()}</span>
+                <span style="font-size: 12px; color: rgba(255,255,255,0.3);">${stepKm} km</span>
+              </div>
+              <div style="height: 6px; background: rgba(99,179,237,0.12); border-radius: 3px; overflow: hidden;">
+                <div style="height: 100%; background: linear-gradient(90deg, #63B3ED, #4ECDC4); width: ${stepPct}%;"></div>
+              </div>
+            </div>
+            <div style="width: 100%; display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 10px;">
+              ${NUTRIENTS.map(n => {
+                const val = totals[n.key];
+                const goal = DEFAULT_GOALS[n.key];
+                const pct = Math.min((val / goal), 1);
+                const dasharray = Math.PI * 44 * pct;
+
+                return `
+                  <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                    <div style="position: relative; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center;">
+                      <svg width="56" height="56" style="transform: rotate(-90deg); position: absolute;">
+                        <circle cx="28" cy="28" r="22" fill="none" stroke="rgba(99,179,237,0.12)" stroke-width="6"/>
+                        <circle cx="28" cy="28" r="22" fill="none" stroke="${n.color}" stroke-width="6" stroke-dasharray="${dasharray} ${Math.PI * 44}" stroke-linecap="round" style="transition: stroke-dasharray 0.6s;"/>
+                      </svg>
+                      <div style="font-size: 16px; position: relative; z-index: 1;">${n.icon}</div>
+                    </div>
+                    <div style="font-size: 10px; color: rgba(255,255,255,0.5); line-height: 1.1; text-align: center;">${n.label}</div>
+                    <div style="font-size: 11px; font-weight: 600; color: ${n.color};">${Math.round(val)}</div>
+                    <div style="font-size: 9px; color: rgba(255,255,255,0.3);">${Math.round(pct * 100)}%</div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      });
+
+      document.getElementById('history-log').innerHTML = html;
+    }
+
+    function openAddDayModal() {
+      const today = getTodayKey();
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      const monthName = now.toLocaleString('default', { month: 'long' });
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const userData = app.data[app.user] || {};
+      const loggedDays = new Set();
+      
+      Object.keys(userData.log || {}).forEach(date => {
+        if ((userData.log[date] || []).length > 0) loggedDays.add(date);
+      });
+
+      let html = `
+        <div style="text-align: center; margin-bottom: 16px;">
+          <h3 style="font-size: 16px; margin-bottom: 6px;">📅 Select a date to add</h3>
+          <p style="font-size: 12px; color: rgba(255,255,255,0.4);">${monthName} ${year}</p>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; margin-bottom: 20px;">
+      `;
+
+      ['S','M','T','W','T','F','S'].forEach(d => {
+        html += `<div style="text-align: center; font-size: 12px; color: rgba(255,255,255,0.25); font-weight: 700; padding: 1px 0;">${d}</div>`;
+      });
+
+      for (let i = 0; i < firstDay; i++) html += '<div></div>';
+      
+      for (let d = 1; d <= daysInMonth; d++) {
+        const date = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const isToday = date === today;
+        const hasLog = loggedDays.has(date);
+        const isFuture = date > today;
+        
+        let cls = 'cal-day';
+        let style = '';
+        if (isToday) cls += ' today';
+        else if (hasLog) cls += ' logged';
+        else if (isFuture) cls += ' future';
+        
+        const clickHandler = !isFuture ? `onclick="selectAddDate('${date}')"` : '';
+        
+        html += `<button class="${cls}" ${clickHandler}>${d}${hasLog ? '<div class="cal-dot"></div>' : ''}</button>`;
+      }
+
+      html += '</div>';
+      html += `<button onclick="closeModal('add-day-modal')" style="width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); border-radius: 10px; padding: 10px; font-weight: 600;">Cancel</button>`;
+
+      document.getElementById('add-day-content').innerHTML = html;
+      openModal('add-day-modal');
+    }
+
+    function selectAddDate(date) {
+      app.editingDate = date;
+      const dateObj = new Date(date + 'T00:00:00');
+      const dayName = dateObj.toLocaleString('default', { weekday: 'long' });
+      const monthDay = dateObj.toLocaleString('default', { month: 'short', day: 'numeric' });
+      const year = dateObj.getFullYear();
+      const formattedDate = `${dayName}, ${monthDay} ${year}`;
+      
+      closeModal('add-day-modal');
+      editDay(date);
+    }
+
+    function renderSettings() {
+      const userData = app.data[app.user] || {};
+      const goals = { ...DEFAULT_GOALS, ...userData.goals };
+
+      let html = `
+        <div class="goal-item">
+          <div class="goal-label">
+            <span style="font-size: 20px;">👟</span>
+            <div><strong style="font-size: 14px;">Daily Steps</strong></div>
+          </div>
+          <div class="goal-controls">
+            <button class="goal-btn" onclick="updateGoal('steps', ${goals.steps - 500})">−</button>
+            <input type="number" class="goal-input" value="${goals.steps}" onchange="updateGoal('steps', this.value)">
+            <button class="goal-btn" onclick="updateGoal('steps', ${goals.steps + 500})">+</button>
+            <span style="font-size: 12px; color: rgba(255,255,255,0.3;">steps</span>
+          </div>
+        </div>
+      `;
+
+      NUTRIENTS.forEach(n => {
+        html += `
+          <div class="goal-item">
+            <div class="goal-label">
+              <span style="font-size: 20px;">${n.icon}</span>
+              <div><strong style="font-size: 14px;">${n.label}</strong></div>
+            </div>
+            <div class="goal-controls">
+              <button class="goal-btn" onclick="updateGoal('${n.key}', ${goals[n.key] - 10})">−</button>
+              <input type="number" class="goal-input" value="${goals[n.key]}" onchange="updateGoal('${n.key}', this.value)">
+              <button class="goal-btn" onclick="updateGoal('${n.key}', ${goals[n.key] + 10})">+</button>
+              <span style="font-size: 12px; color: rgba(255,255,255,0.3);">${n.unit}</span>
+            </div>
+          </div>
+        `;
+      });
+
+      document.getElementById('settings-form').innerHTML = html;
+    }
+
+    function updateGoal(key, value) {
+      const userData = app.data[app.user];
+      if (!userData.goals) userData.goals = {};
+      userData.goals[key] = Math.max(0, parseInt(value));
+      save();
+      renderSettings();
+      if (document.getElementById('today-tab').classList.contains('active')) renderMacros();
+    }
+
+    function logout() {
+      app.user = null;
+      document.getElementById('auth-username').value = '';
+      document.getElementById('auth-password').value = '';
+      document.getElementById('auth-error').textContent = '';
+      render();
+    }
+
+    function getTodayKey() {
+      return new Date().toISOString().split('T')[0];
+    }
+
+    // AUTH
+    document.getElementById('auth-toggle').onclick = () => {
+      app.mode = app.mode === 'login' ? 'signup' : 'login';
+      renderLogin();
+    };
+
+    document.getElementById('auth-submit').onclick = () => {
+      const username = document.getElementById('auth-username').value.trim();
+      const password = document.getElementById('auth-password').value.trim();
+      const saveCredentials = document.getElementById('save-credentials').checked;
+      const error = document.getElementById('auth-error');
+
+      if (!username || !password) {
+        error.textContent = 'Please fill all fields';
+        return;
+      }
+
+      if (app.mode === 'signup') {
+        if (app.data[username]) {
+          error.textContent = 'Username taken';
+          return;
+        }
+        if (password.length < 4) {
+          error.textContent = 'Password min 4 chars';
+          return;
+        }
+        app.data[username] = { log: {}, steps: {}, goals: {} };
+      } else {
+        if (!app.data[username] || app.data[username].password !== password) {
+          error.textContent = 'Wrong credentials';
+          return;
+        }
+      }
+
+      if (app.mode === 'signup') {
+        app.data[username].password = password;
+      }
+
+      app.user = username;
+      save();
+
+      // Save credentials if checkbox is checked
+      if (saveCredentials) {
+        localStorage.setItem('nutritrack_saved_login', JSON.stringify({ username, password }));
+      } else {
+        localStorage.removeItem('nutritrack_saved_login');
+      }
+
+      render();
+    };
+
+    load();
+  </script>
+</body>
+</html>
