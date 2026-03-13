@@ -28,73 +28,73 @@
       text-align: center;
     }
     .logo {
-      font-size: 32px;
+      font-size: 26px;
       font-weight: 700;
       background: linear-gradient(135deg, #FF6B35, #FFB347);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
-    .subtitle { color: rgba(255,255,255,0.4); font-size: 14px; margin-bottom: 40px; }
+    .subtitle { color: rgba(255,255,255,0.4); font-size: 13px; margin-bottom: 28px; }
     .auth-form {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
     .input-field {
       background: rgba(255,255,255,0.06);
       border: 1.5px solid rgba(255,255,255,0.1);
       border-radius: 12px;
-      padding: 12px 16px;
+      padding: 10px 14px;
       color: #F0F0F0;
-      font-size: 15px;
+      font-size: 14px;
       width: 100%;
       transition: border-color 0.2s;
     }
     .input-field:focus { border-color: #FF6B35; }
     .input-field::placeholder { color: rgba(255,255,255,0.3); }
-    .error-msg { color: #FF6B6B; font-size: 13px; min-height: 20px; }
+    .error-msg { color: #FF6B6B; font-size: 12px; min-height: 18px; }
     .btn-primary {
       background: linear-gradient(135deg, #FF6B35, #FF8C60);
       color: white;
       border-radius: 12px;
-      padding: 12px 24px;
+      padding: 10px 20px;
       font-weight: 600;
-      font-size: 15px;
+      font-size: 14px;
       transition: all 0.2s;
       width: 100%;
     }
     .btn-primary:hover { filter: brightness(1.1); }
 
     /* MAIN APP */
-    #app-page { padding: 24px 16px 80px; }
+    #app-page { padding: 16px 12px 70px; }
     .container { max-width: 900px; margin: 0 auto; }
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 24px;
+      margin-bottom: 14px;
     }
     .logout-btn {
       background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.1);
       color: rgba(255,255,255,0.5);
       border-radius: 10px;
-      padding: 8px 16px;
-      font-size: 13px;
+      padding: 6px 12px;
+      font-size: 12px;
       font-weight: 500;
     }
     .tabs {
       display: flex;
-      gap: 4px;
-      margin-bottom: 24px;
+      gap: 3px;
+      margin-bottom: 14px;
     }
     .tab {
-      padding: 8px 14px;
+      padding: 6px 12px;
       border-radius: 8px;
       font-weight: 500;
-      font-size: 14px;
+      font-size: 13px;
       background: transparent;
       color: rgba(255,255,255,0.4);
       border: none;
@@ -114,8 +114,8 @@
       background: rgba(255,107,53,0.06);
       border: 1px solid rgba(255,107,53,0.18);
       border-radius: 16px;
-      padding: 10px 12px;
-      margin-bottom: 20px;
+      padding: 8px 10px;
+      margin-bottom: 12px;
     }
     .calendar-toggle {
       background: none;
@@ -124,15 +124,15 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 4px 0;
+      padding: 2px 0;
       cursor: pointer;
       color: inherit;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
     }
     .calendar-arrow {
       color: rgba(255,255,255,0.3);
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 900;
       transition: transform 0.2s;
     }
@@ -140,21 +140,21 @@
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: 1px;
-      margin-top: 8px;
+      gap: 0.5px;
+      margin-top: 6px;
     }
     .cal-header {
       text-align: center;
-      font-size: 12px;
+      font-size: 11px;
       color: rgba(255,255,255,0.25);
       font-weight: 700;
       padding: 1px 0;
     }
     .cal-day {
       text-align: center;
-      padding: 4px 2px;
-      border-radius: 4px;
-      font-size: 12px;
+      padding: 3px 1px;
+      border-radius: 3px;
+      font-size: 11px;
       font-weight: 600;
       cursor: pointer;
       border: 1px solid transparent;
@@ -166,86 +166,89 @@
     .cal-day.today { color: #FF6B35; background: rgba(255,107,53,0.18); border: 1px solid rgba(255,107,53,0.5); font-weight: 800; }
     .cal-day.logged { color: #F0F0F0; background: rgba(255,107,53,0.1); }
     .cal-day.future { color: rgba(255,255,255,0.15); cursor: default; }
-    .cal-dot { width: 3px; height: 3px; border-radius: 50%; background: #FF6B35; margin-top: 1px; }
+    .cal-dot { width: 2px; height: 2px; border-radius: 50%; background: #FF6B35; margin-top: 1px; }
 
     /* STEPS */
     .step-counter {
       background: rgba(99,179,237,0.07);
       border: 1px solid rgba(99,179,237,0.2);
       border-radius: 16px;
-      padding: 14px 16px;
-      margin-bottom: 20px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
     }
-    .step-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    .step-title { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13px; }
+    .step-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .step-title { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 12px; }
     .step-bar {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
     .progress-container { flex: 1; }
     .progress-bar {
-      height: 8px;
+      height: 6px;
       background: rgba(99,179,237,0.12);
-      border-radius: 4px;
+      border-radius: 3px;
       overflow: hidden;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
     .progress-fill {
       height: 100%;
       background: linear-gradient(90deg, #63B3ED, #4ECDC4);
       transition: width 0.6s cubic-bezier(0.34,1.56,0.64,1);
     }
-    .step-stats { font-size: 11px; color: rgba(255,255,255,0.35); display: flex; justify-content: space-between; }
+    .step-stats { font-size: 10px; color: rgba(255,255,255,0.35); display: flex; justify-content: space-between; }
     .step-percent { text-align: right; }
-    .step-percent-big { font-size: 16px; font-weight: 900; color: #63B3ED; }
-    .step-km { font-size: 10px; color: rgba(255,255,255,0.35); }
+    .step-percent-big { font-size: 14px; font-weight: 900; color: #63B3ED; }
+    .step-km { font-size: 9px; color: rgba(255,255,255,0.35); }
 
     /* MACROS */
     .macro-grid {
       display: grid;
       grid-template-columns: repeat(6, 1fr);
-      gap: 10px;
-      margin-bottom: 20px;
+      gap: 6px;
+      margin-bottom: 12px;
     }
     .macro-card {
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.08);
       border-radius: 12px;
-      padding: 10px 8px;
+      padding: 7px 5px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
     }
     .macro-chart {
-      width: 56px;
-      height: 56px;
+      width: 48px;
+      height: 48px;
       position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .macro-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 14px; }
-    .macro-value { font-size: 14px; font-weight: 700; line-height: 1.1; }
-    .macro-label { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.6); }
-    .macro-percent { font-size: 9px; color: rgba(255,255,255,0.3); }
+    .macro-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 13px; }
+    .macro-value { font-size: 12px; font-weight: 700; line-height: 1.1; }
+    .macro-label { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.6); }
+    .macro-percent { font-size: 8px; color: rgba(255,255,255,0.3); }
 
     /* FOOD LOG */
-    .section-title { font-size: 16px; font-weight: 600; color: rgba(255,255,255,0.6); margin: 20px 0 12px; }
+    .section-title { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.6); margin: 12px 0 8px; }
     .log-item {
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 14px;
-      padding: 14px 16px;
-      margin-bottom: 10px;
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
     .log-item-info { flex: 1; }
-    .log-item-name { font-weight: 600; font-size: 15px; margin-bottom: 6px; }
-    .log-item-time { color: rgba(255,255,255,0.3); font-size: 12px; display: inline-block; margin-left: 10px; }
-    .log-item-nutrients { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; }
-    .log-delete { background: rgba(255,100,100,0.1); border: 1px solid rgba(255,100,100,0.2); color: #FF6B6B; border-radius: 8px; padding: 6px 10px; font-size: 13px; }
-    .empty-state { text-align: center; padding: 48px 0; color: rgba(255,255,255,0.2); }
+    .log-item-name { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+    .log-item-time { color: rgba(255,255,255,0.3); font-size: 11px; display: inline-block; margin-left: 8px; }
+    .log-item-nutrients { display: flex; gap: 10px; flex-wrap: wrap; font-size: 11px; }
+    .log-delete { background: rgba(255,100,100,0.1); border: 1px solid rgba(255,100,100,0.2); color: #FF6B6B; border-radius: 8px; padding: 5px 8px; font-size: 12px; }
+    .empty-state { text-align: center; padding: 24px 0; color: rgba(255,255,255,0.2); }
 
     /* MODAL */
     .modal {
@@ -259,35 +262,35 @@
       z-index: 300;
       align-items: center;
       justify-content: center;
-      padding: 16px;
+      padding: 12px;
     }
     .modal.active { display: flex; }
     .modal-content {
       background: #161920;
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: 20px;
-      padding: 24px;
+      padding: 18px;
       width: 100%;
       max-width: 520px;
       max-height: 90vh;
       overflow-y: auto;
     }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .modal-title { font-weight: 700; font-size: 18px; }
-    .modal-close { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5); border-radius: 8px; width: 32px; height: 32px; font-size: 16px; }
-    .form-group { margin-bottom: 12px; }
-    .form-label { font-size: 12px; font-weight: 500; display: block; margin-bottom: 5px; }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .modal-title { font-weight: 700; font-size: 16px; }
+    .modal-close { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5); border-radius: 8px; width: 28px; height: 28px; font-size: 14px; }
+    .form-group { margin-bottom: 10px; }
+    .form-label { font-size: 11px; font-weight: 500; display: block; margin-bottom: 4px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
     .btn-primary-modal {
       background: linear-gradient(135deg, #FF6B35, #FF8C60);
       color: white;
       border-radius: 12px;
-      padding: 12px 24px;
+      padding: 10px 20px;
       font-weight: 600;
-      font-size: 15px;
+      font-size: 14px;
       width: 100%;
-      margin-top: 12px;
+      margin-top: 10px;
     }
 
     /* BUTTON */
@@ -296,26 +299,26 @@
       background: linear-gradient(135deg, #FF6B35, #FF8C60);
       color: white;
       border-radius: 12px;
-      padding: 12px 24px;
+      padding: 11px 20px;
       font-weight: 600;
-      font-size: 15px;
-      margin-bottom: 20px;
+      font-size: 14px;
+      margin-bottom: 14px;
     }
 
     /* SETTINGS */
     .goal-item {
       background: rgba(255,255,255,0.03);
       border-radius: 14px;
-      padding: 16px 20px;
-      margin-bottom: 10px;
+      padding: 12px 16px;
+      margin-bottom: 8px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-    .goal-label { display: flex; align-items: center; gap: 10px; }
-    .goal-controls { display: flex; align-items: center; gap: 6px; }
-    .goal-input { width: 76px; background: rgba(255,255,255,0.07); border: 1.5px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 5px 8px; color: #F0F0F0; font-size: 15px; font-weight: 800; text-align: center; }
-    .goal-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: #F0F0F0; border-radius: 8px; width: 30px; height: 30px; font-size: 17px; font-weight: 700; }
+    .goal-label { display: flex; align-items: center; gap: 8px; }
+    .goal-controls { display: flex; align-items: center; gap: 5px; }
+    .goal-input { width: 70px; background: rgba(255,255,255,0.07); border: 1.5px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 4px 6px; color: #F0F0F0; font-size: 14px; font-weight: 800; text-align: center; }
+    .goal-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: #F0F0F0; border-radius: 8px; width: 28px; height: 28px; font-size: 16px; font-weight: 700; }
 
     @media (max-width: 768px) {
       .macro-grid { grid-template-columns: repeat(3, 1fr); }
@@ -405,7 +408,16 @@
           </div>
         </div>
       </div>
-      <button type="button" onclick="openBarcodeScanner()" style="width: 100%; background: rgba(99,179,237,0.15); border: 1px solid rgba(99,179,237,0.3); color: #63B3ED; border-radius: 10px; padding: 10px; font-weight: 600; margin-bottom: 12px; cursor: pointer; font-size: 14px;">📱 Scan Barcode</button>
+      <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+        <button type="button" onclick="openBarcodeScanner()" style="flex: 1; background: rgba(99,179,237,0.15); border: 1px solid rgba(99,179,237,0.3); color: #63B3ED; border-radius: 10px; padding: 10px; font-weight: 600; cursor: pointer; font-size: 14px;">📱 Scan</button>
+        <button type="button" onclick="toggleProductDatabase()" style="flex: 1; background: rgba(102,179,77,0.15); border: 1px solid rgba(102,179,77,0.3); color: #66B34D; border-radius: 10px; padding: 10px; font-weight: 600; cursor: pointer; font-size: 14px;">📚 Browse</button>
+      </div>
+      <div id="product-database-section" style="display: none; margin-bottom: 12px; background: rgba(102,179,77,0.1); border: 1px solid rgba(102,179,77,0.2); border-radius: 12px; padding: 12px;">
+        <input type="text" id="product-search" class="input-field" placeholder="Search products..." oninput="searchProductDatabase(this.value)" style="margin-bottom: 8px;">
+        <div id="product-list" style="max-height: 200px; overflow-y: auto;">
+          <!-- Products will be populated here -->
+        </div>
+      </div>
       <div class="form-group">
         <label class="form-label">Food name *</label>
         <input type="text" id="food-name" class="input-field" placeholder="e.g. Chicken breast">
@@ -472,23 +484,24 @@
         <div class="modal-title">Scan Barcode</div>
         <button class="modal-close" onclick="closeBarcodeScanner()">✕</button>
       </div>
-      <div id="barcode-scanner-container" style="width: 100%; height: 300px; background: #0a0a0a; border-radius: 12px; overflow: hidden; margin-bottom: 12px; position: relative; display: block;">
+      <div id="barcode-scanner-container" style="width: 100%; height: 240px; background: #0a0a0a; border-radius: 12px; overflow: hidden; margin-bottom: 8px; position: relative; display: block;">
         <video id="barcode-video" style="width: 100%; height: 100%; object-fit: cover;"></video>
         <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 3px solid rgba(255,107,53,0.5); width: 80%; aspect-ratio: 1; border-radius: 12px;"></div>
       </div>
-      <div id="barcode-status" style="text-align: center; color: rgba(255,255,255,0.6); font-size: 13px; margin-bottom: 12px;">Point camera at barcode...</div>
+      <button type="button" onclick="rescanBarcode()" id="rescan-camera-btn" style="width: 100%; background: rgba(99,179,237,0.15); border: 1px solid rgba(99,179,237,0.3); color: #63B3ED; border-radius: 10px; padding: 8px; font-weight: 600; margin-bottom: 10px; cursor: pointer; display: none; font-size: 13px;">🔄 Reset & Rescan</button>
+      <div id="barcode-status" style="text-align: center; color: rgba(255,255,255,0.6); font-size: 12px; margin-bottom: 10px;">Point camera at barcode...</div>
       
-      <div id="manual-entry-section" style="display: none; margin-bottom: 12px;">
+      <div id="manual-entry-section" style="display: none; margin-bottom: 10px;">
         <label class="form-label">Enter Barcode Manually</label>
         <input type="text" id="manual-barcode-input" class="input-field" placeholder="Enter barcode numbers..." style="margin-bottom: 8px;">
-        <button type="button" onclick="searchManualBarcode()" style="width: 100%; background: rgba(99,179,237,0.15); border: 1px solid rgba(99,179,237,0.3); color: #63B3ED; border-radius: 10px; padding: 10px; font-weight: 600; margin-bottom: 8px;">🔍 Search</button>
+        <button type="button" onclick="searchManualBarcode()" style="width: 100%; background: rgba(99,179,237,0.15); border: 1px solid rgba(99,179,237,0.3); color: #63B3ED; border-radius: 10px; padding: 8px; font-weight: 600; margin-bottom: 8px; font-size: 13px;">🔍 Search</button>
       </div>
       
-      <div style="display: flex; gap: 8px;">
-        <button type="button" onclick="toggleManualEntry()" id="manual-entry-toggle" style="flex: 1; background: rgba(255,107,53,0.15); border: 1px solid rgba(255,107,53,0.3); color: #FF6B35; border-radius: 10px; padding: 10px; font-weight: 600; cursor: pointer;">✏️ Manual Entry</button>
-        <button type="button" onclick="rescanBarcode()" id="rescan-btn" style="flex: 1; background: rgba(99,179,237,0.15); border: 1px solid rgba(99,179,237,0.3); color: #63B3ED; border-radius: 10px; padding: 10px; font-weight: 600; cursor: pointer; display: none;">🔄 Rescan</button>
+      <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+        <button type="button" onclick="toggleManualEntry()" id="manual-entry-toggle" style="flex: 1; background: rgba(255,107,53,0.15); border: 1px solid rgba(255,107,53,0.3); color: #FF6B35; border-radius: 10px; padding: 8px; font-weight: 600; cursor: pointer; font-size: 13px;">✏️ Manual Entry</button>
+        <button type="button" onclick="rescanBarcode()" id="rescan-btn" style="flex: 1; background: rgba(99,179,237,0.15); border: 1px solid rgba(99,179,237,0.3); color: #63B3ED; border-radius: 10px; padding: 8px; font-weight: 600; cursor: pointer; display: none; font-size: 13px;">🔄 Rescan</button>
       </div>
-      <button type="button" onclick="closeBarcodeScanner()" style="width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); border-radius: 10px; padding: 10px; font-weight: 600; margin-top: 8px;">Close Scanner</button>
+      <button type="button" onclick="closeBarcodeScanner()" style="width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); border-radius: 10px; padding: 8px; font-weight: 600; font-size: 13px;">Close Scanner</button>
     </div>
   </div>
 
@@ -1013,9 +1026,9 @@
         html += `
           <div class="macro-card">
             <div class="macro-chart">
-              <svg width="56" height="56" style="transform: rotate(-90deg);">
-                <circle cx="28" cy="28" r="22" fill="none" stroke="rgba(99,179,237,0.12)" stroke-width="6"/>
-                <circle cx="28" cy="28" r="22" fill="none" stroke="${n.color}" stroke-width="6" stroke-dasharray="${dasharray} ${Math.PI*44}" stroke-linecap="round" style="transition: stroke-dasharray 0.6s;"/>
+              <svg width="48" height="48" style="transform: rotate(-90deg); position: absolute;">
+                <circle cx="24" cy="24" r="19" fill="none" stroke="rgba(99,179,237,0.12)" stroke-width="5"/>
+                <circle cx="24" cy="24" r="19" fill="none" stroke="${n.color}" stroke-width="5" stroke-dasharray="${dasharray} ${Math.PI*38}" stroke-linecap="round" style="transition: stroke-dasharray 0.6s;"/>
               </svg>
               <div class="macro-icon">${n.icon}</div>
             </div>
@@ -1079,14 +1092,14 @@
         const avg = weekAverages[n.key];
         const goal = goals[n.key];
         const pct = Math.round((avg / goal) * 100);
-        const dasharray = Math.PI * 44 * Math.min(avg / goal, 1);
+        const dasharray = Math.PI * 38 * Math.min(avg / goal, 1);
 
         html += `
           <div class="macro-card" style="opacity: 0.75;">
             <div class="macro-chart">
-              <svg width="56" height="56" style="transform: rotate(-90deg);">
-                <circle cx="28" cy="28" r="22" fill="none" stroke="rgba(99,179,237,0.12)" stroke-width="6"/>
-                <circle cx="28" cy="28" r="22" fill="none" stroke="${n.color}" stroke-width="6" stroke-dasharray="${dasharray} ${Math.PI*44}" stroke-linecap="round" style="transition: stroke-dasharray 0.6s;"/>
+              <svg width="48" height="48" style="transform: rotate(-90deg); position: absolute;">
+                <circle cx="24" cy="24" r="19" fill="none" stroke="rgba(99,179,237,0.12)" stroke-width="5"/>
+                <circle cx="24" cy="24" r="19" fill="none" stroke="${n.color}" stroke-width="5" stroke-dasharray="${dasharray} ${Math.PI*38}" stroke-linecap="round" style="transition: stroke-dasharray 0.6s;"/>
               </svg>
               <div class="macro-icon">${n.icon}</div>
             </div>
@@ -1170,6 +1183,7 @@
 
     function rescanBarcode() {
       document.getElementById('barcode-status').textContent = 'Point camera at barcode...';
+      document.getElementById('rescan-camera-btn').style.display = 'none';
       stopBarcodeScanning();
       startBarcodeScanning();
     }
@@ -1224,7 +1238,8 @@
       const ctx = canvas.getContext('2d');
       let detectedBarcode = null;
       let confidenceCount = 0;
-      const confidenceThreshold = 5; // Need to detect same barcode 5 times
+      const confidenceThreshold = 8; // Increased to 8 for less sensitivity
+      let lastStatusUpdate = 0;
       
       const scan = () => {
         if (!barcodeStream) return;
@@ -1244,11 +1259,19 @@
               // Same barcode detected again
               confidenceCount++;
               const percent = Math.round((confidenceCount / confidenceThreshold) * 100);
-              statusDiv.textContent = `📊 Confidence: ${percent}% - ${barcode}`;
+              
+              // Only update status every few frames to reduce flickering
+              const now = Date.now();
+              if (now - lastStatusUpdate > 200) {
+                statusDiv.textContent = `📊 Confidence: ${percent}% - ${barcode}`;
+                document.getElementById('rescan-camera-btn').style.display = 'block';
+                lastStatusUpdate = now;
+              }
               
               if (confidenceCount >= confidenceThreshold) {
                 // High confidence - search for this barcode
                 statusDiv.textContent = `✅ Barcode confirmed: ${barcode}`;
+                document.getElementById('rescan-camera-btn').style.display = 'none';
                 searchBarcodeInOpenFoodFacts(barcode, statusDiv);
                 return;
               }
@@ -1256,14 +1279,24 @@
               // Different barcode detected - reset confidence
               detectedBarcode = barcode;
               confidenceCount = 1;
-              statusDiv.textContent = `📊 Confidence: 20% - ${barcode}`;
+              const now = Date.now();
+              if (now - lastStatusUpdate > 200) {
+                statusDiv.textContent = `📊 Confidence: 12% - ${barcode}`;
+                document.getElementById('rescan-camera-btn').style.display = 'block';
+                lastStatusUpdate = now;
+              }
             }
           } else {
             // No barcode detected this frame
             if (detectedBarcode) {
               detectedBarcode = null;
               confidenceCount = 0;
-              statusDiv.textContent = 'Point camera at barcode...';
+              const now = Date.now();
+              if (now - lastStatusUpdate > 200) {
+                statusDiv.textContent = 'Point camera at barcode...';
+                document.getElementById('rescan-camera-btn').style.display = 'none';
+                lastStatusUpdate = now;
+              }
             }
           }
         }
@@ -1386,6 +1419,108 @@
       };
       
       tryFetch();
+    }
+
+    // Local product database - Australian and popular products
+    const productDatabase = [
+      // Australian Beverages
+      { name: 'Monster Energy Zero Ultra', protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0, calories: 10 },
+      { name: 'Monster Energy (Original)', protein: 0, carbs: 27, fat: 0, fiber: 0, sugar: 27, calories: 110 },
+      { name: 'Red Bull (Regular)', protein: 1.1, carbs: 11, fat: 0, fiber: 0, sugar: 11, calories: 43 },
+      { name: 'Coca-Cola', protein: 0, carbs: 10.6, fat: 0, fiber: 0, sugar: 10.6, calories: 42 },
+      { name: 'Sprite', protein: 0, carbs: 9.8, fat: 0, fiber: 0, sugar: 9.8, calories: 38 },
+      { name: 'Lemonade (Regular)', protein: 0, carbs: 11, fat: 0, fiber: 0, sugar: 11, calories: 44 },
+      
+      // Australian Snacks
+      { name: 'Tim Tam Original', protein: 3.5, carbs: 22, fat: 8.5, fiber: 0.5, sugar: 14, calories: 175 },
+      { name: 'Tim Tam Chocolate', protein: 3, carbs: 21, fat: 9, fiber: 0.5, sugar: 15, calories: 180 },
+      { name: 'Anzac Biscuit', protein: 3, carbs: 18, fat: 6, fiber: 1, sugar: 10, calories: 145 },
+      { name: 'Lamington (Coconut)', protein: 2, carbs: 20, fat: 8, fiber: 1, sugar: 15, calories: 160 },
+      
+      // Breakfast Items
+      { name: 'Weet-Bix (2 biscuits)', protein: 2.5, carbs: 16, fat: 0.5, fiber: 2.5, sugar: 0.5, calories: 75 },
+      { name: 'Vegemite on Toast', protein: 4, carbs: 20, fat: 2, fiber: 2, sugar: 1, calories: 120 },
+      { name: 'Eggs Scrambled (2)', protein: 12, carbs: 1, fat: 10, fiber: 0, sugar: 0, calories: 140 },
+      { name: 'Porridge/Oatmeal (1 cup)', protein: 10, carbs: 54, fat: 8, fiber: 8, sugar: 1, calories: 300 },
+      
+      // Proteins
+      { name: 'Chicken Breast (100g)', protein: 31, carbs: 0, fat: 3.6, fiber: 0, sugar: 0, calories: 165 },
+      { name: 'Beef Steak (100g)', protein: 26, carbs: 0, fat: 5, fiber: 0, sugar: 0, calories: 180 },
+      { name: 'Salmon Fillet (100g)', protein: 25, carbs: 0, fat: 13, fiber: 0, sugar: 0, calories: 208 },
+      { name: 'Greek Yogurt (100g)', protein: 10, carbs: 3.7, fat: 0.4, fiber: 0, sugar: 3, calories: 59 },
+      
+      // Vegetables
+      { name: 'Banana (medium)', protein: 1.1, carbs: 27, fat: 0.3, fiber: 3.1, sugar: 14, calories: 105 },
+      { name: 'Apple (medium)', protein: 0.5, carbs: 25, fat: 0.3, fiber: 4.4, sugar: 19, calories: 95 },
+      { name: 'Broccoli (1 cup cooked)', protein: 3.7, carbs: 7, fat: 0.5, fiber: 2.4, sugar: 1.2, calories: 55 },
+      { name: 'Carrot (1 medium)', protein: 0.6, carbs: 12, fat: 0.2, fiber: 3.5, sugar: 7, calories: 50 },
+      { name: 'Sweet Potato (100g)', protein: 1.6, carbs: 20, fat: 0.1, fiber: 3, sugar: 4.2, calories: 86 },
+      
+      // Grains & Bread
+      { name: 'White Bread Slice', protein: 2.7, carbs: 14, fat: 1, fiber: 0.7, sugar: 1, calories: 75 },
+      { name: 'Whole Wheat Bread Slice', protein: 3.6, carbs: 12, fat: 1.5, fiber: 2.4, sugar: 1, calories: 80 },
+      { name: 'White Rice (1 cup cooked)', protein: 2, carbs: 45, fat: 0.3, fiber: 0.6, sugar: 0, calories: 206 },
+      { name: 'Brown Rice (1 cup cooked)', protein: 3.5, carbs: 45, fat: 1.8, fiber: 3.5, sugar: 0, calories: 215 },
+      { name: 'Pasta (1 cup cooked)', protein: 8, carbs: 43, fat: 1.1, fiber: 2.7, sugar: 0.2, calories: 220 },
+      
+      // Nuts & Seeds
+      { name: 'Almonds (handful 30g)', protein: 10.6, carbs: 6, fat: 14.4, fiber: 3.5, sugar: 1.2, calories: 161 },
+      { name: 'Peanut Butter (2 tbsp)', protein: 8, carbs: 7, fat: 16, fiber: 2, sugar: 1, calories: 188 },
+      { name: 'Mixed Nuts (30g)', protein: 5.5, carbs: 8, fat: 14, fiber: 1.5, sugar: 1.5, calories: 161 },
+    ];
+
+    function toggleProductDatabase() {
+      const section = document.getElementById('product-database-section');
+      if (section.style.display === 'none') {
+        section.style.display = 'block';
+        document.getElementById('product-search').focus();
+        displayProductList(productDatabase);
+      } else {
+        section.style.display = 'none';
+      }
+    }
+
+    function searchProductDatabase(searchTerm) {
+      if (!searchTerm.trim()) {
+        displayProductList(productDatabase);
+        return;
+      }
+      
+      const filtered = productDatabase.filter(product =>
+        product.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      
+      displayProductList(filtered);
+    }
+
+    function displayProductList(products) {
+      const productList = document.getElementById('product-list');
+      
+      if (products.length === 0) {
+        productList.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.4); padding: 12px;">No products found</div>';
+        return;
+      }
+      
+      productList.innerHTML = products.map(product => `
+        <div style="padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(102,179,77,0.15)'" onmouseout="this.style.background='transparent'" onclick="selectProductFromDatabase('${product.name}', ${product.protein}, ${product.carbs}, ${product.fat}, ${product.fiber}, ${product.sugar})">
+          <div style="font-weight: 500; font-size: 13px; color: #F0F0F0;">${product.name}</div>
+          <div style="font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px;">
+            ${product.calories} cal • P:${product.protein.toFixed(0)}g C:${product.carbs.toFixed(0)}g F:${product.fat.toFixed(0)}g
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function selectProductFromDatabase(name, protein, carbs, fat, fiber, sugar) {
+      document.getElementById('food-name').value = name;
+      document.getElementById('food-protein').value = protein.toFixed(1);
+      document.getElementById('food-carbs').value = carbs.toFixed(1);
+      document.getElementById('food-fat').value = fat.toFixed(1);
+      document.getElementById('food-fiber').value = fiber.toFixed(1);
+      document.getElementById('food-sugar').value = sugar.toFixed(1);
+      document.getElementById('product-database-section').style.display = 'none';
+      document.getElementById('product-search').value = '';
+      calculateCalories();
     }
 
     function filterSavedFoods(searchTerm) {
