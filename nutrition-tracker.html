@@ -486,12 +486,12 @@
       </div>
       <div id="barcode-scanner-container" style="width: 100%; height: 240px; background: #0a0a0a; border-radius: 12px; overflow: visible; margin-bottom: 8px; position: relative; display: block;">
         <video id="barcode-video" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;"></video>
-        <!-- Thin horizontal rectangle guide where numbers should go -->
-        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 3px solid #FF6B35; width: 70%; height: 15%; border-radius: 6px; z-index: 10; box-shadow: 0 0 0 1px rgba(255,107,53,0.3);"></div>
+        <!-- Small tight rectangle guide for barcode numbers -->
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 3px solid #FF6B35; width: 50%; height: 8%; border-radius: 4px; z-index: 10; box-shadow: 0 0 0 1px rgba(255,107,53,0.3);"></div>
         <!-- Darker overlay on top and bottom to show scanning area -->
-        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.4) 100%); z-index: 5; border-radius: 12px;"></div>
+        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; background: linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 42%, rgba(0,0,0,0) 58%, rgba(0,0,0,0.5) 100%); z-index: 5; border-radius: 12px;"></div>
         <!-- Center line indicator -->
-        <div style="position: absolute; top: 50%; left: 15%; right: 15%; height: 2px; background: linear-gradient(to right, transparent, rgba(255,107,53,0.5) 20%, rgba(255,107,53,0.5) 80%, transparent); z-index: 8;"></div>
+        <div style="position: absolute; top: 50%; left: 25%; right: 25%; height: 2px; background: linear-gradient(to right, transparent, rgba(255,107,53,0.6) 25%, rgba(255,107,53,0.6) 75%, transparent); z-index: 8;"></div>
       </div>
       <button type="button" onclick="rescanBarcode()" id="rescan-camera-btn" style="width: 100%; background: rgba(99,179,237,0.15); border: 1px solid rgba(99,179,237,0.3); color: #63B3ED; border-radius: 10px; padding: 8px; font-weight: 600; margin-bottom: 10px; cursor: pointer; display: none; font-size: 13px;">🔄 Reset & Rescan</button>
       <div id="barcode-status" style="text-align: center; color: rgba(255,255,255,0.6); font-size: 12px; margin-bottom: 10px;">Point camera at barcode...</div>
@@ -1313,17 +1313,17 @@
     }
 
     function detectBarcode(imageData) {
-      // Only scan a thin horizontal band in the middle (where barcodes are)
+      // Only scan a very tight band in the middle (where barcodes are)
       const data = imageData.data;
       const width = imageData.width;
       const height = imageData.height;
       
-      // Define a thin scanning band in the middle (best focus area)
-      // Only scan the horizontal center, very thin vertical band (8% of height)
+      // Define scanning bounds to match visual rectangle EXACTLY
+      // Visual: width 50% (25-75%), height 8% (46-54%)
       const bandStartY = Math.floor(height * 0.46);
       const bandEndY = Math.floor(height * 0.54);
-      const boxStartX = Math.floor(width * 0.15);
-      const boxEndX = Math.floor(width * 0.85);
+      const boxStartX = Math.floor(width * 0.25);
+      const boxEndX = Math.floor(width * 0.75);
       
       // Scan only the thin middle band
       const results = [];
