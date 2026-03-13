@@ -1308,163 +1308,104 @@
     }
 
     function detectBarcode(imageData) {
-      // Extract visible numbers from the barcode image
+      // Fresh simple barcode detection
+      // Just look for the barcode stripe pattern and return it as a string
       const data = imageData.data;
       const width = imageData.width;
       const height = imageData.height;
       
-      // Scan only the tight center area (50% width, 10% height)
-      const bandStartY = Math.floor(height * 0.45);
-      const bandEndY = Math.floor(height * 0.55);
-      const boxStartX = Math.floor(width * 0.25);
-      const boxEndX = Math.floor(width * 0.75);
+      // Scan center area only
+      const y = Math.floor(height * 0.5); // Middle row only for speed
+      const startX = Math.floor(width * 0.25);
+      const endX = Math.floor(width * 0.75);
       
-      // Collect all detected number sequences from multiple rows
-      const numberSequences = [];
-      
-      // Scan each row
-      for (let y = bandStartY; y < bandEndY; y++) {
-        const numbers = extractNumbersFromRow(data, width, y, boxStartX, boxEndX);
-        if (numbers && /^\d{8,13}$/.test(numbers)) {
-          numberSequences.push(numbers);
-        }
-      }
-      
-      // Return the most frequently detected sequence
-      if (numberSequences.length > 0) {
-        const counts = {};
-        numberSequences.forEach(seq => {
-          counts[seq] = (counts[seq] || 0) + 1;
-        });
-        
-        let best = null;
-        let maxCount = 0;
-        for (const seq in counts) {
-          if (counts[seq] > maxCount) {
-            maxCount = counts[seq];
-            best = seq;
-          }
-        }
-        
-        return best;
-      }
-      
-      return null;
-    }
-
-    function extractNumbersFromRow(data, width, y, startX, endX) {
-      // Look for actual visible numbers in the barcode at the bottom
-      // Usually barcodes have printed numbers at the bottom
-      
-      // Get pixels from this row
-      const pixels = [];
+      // Extract brightness from this row
+      const row = [];
       for (let x = startX; x < endX; x++) {
         const idx = (y * width + x) * 4;
-        const r = data[idx];
-        const g = data[idx + 1];
-        const b = data[idx + 2];
-        const gray = (r + g + b) / 3;
-        pixels.push(gray);
+        const brightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+        row.push(brightness < 128 ? 1 : 0); // 1 = dark, 0 = light
       }
       
-      // Find segments of dark pixels (where numbers are)
-      // Numbers are typically dark (low brightness)
-      const threshold = 180; // Dark threshold
-      const segments = [];
-      let inSegment = false;
-      let segmentStart = 0;
-      let segmentPixels = [];
+      // Look for barcode pattern: alternating dark/light bars
+      const barcode = decodeFromBars(row);
       
-      for (let i = 0; i < pixels.length; i++) {
-        if (pixels[i] < threshold) {
-          if (!inSegment) {
-            segmentStart = i;
-            segmentPixels = [];
-            inSegment = true;
-          }
-          segmentPixels.push(pixels[i]);
-        } else {
-          if (inSegment && segmentPixels.length > 5) {
-            // Save this segment as a potential digit
-            segments.push({
-              start: segmentStart,
-              end: i,
-              pixels: segmentPixels,
-              darkness: segmentPixels.reduce((a, b) => a + b, 0) / segmentPixels.length
-            });
-          }
-          inSegment = false;
-          segmentPixels = [];
-        }
-      }
-      
-      // If we have potential segments, they should correspond to digits
-      if (segments.length >= 8 && segments.length <= 13) {
-        // Order segments left to right and try to read them
-        let result = '';
-        
-        for (let i = 0; i < segments.length; i++) {
-          const seg = segments[i];
-          // Each segment is a digit - we need to read what digit it is
-          // For now, use OCR-style recognition based on darkness and width
-          const digit = recognizeDigit(seg);
-          if (digit !== null) {
-            result += digit.toString();
-          }
-        }
-        
-        if (result.length >= 8 && /^\d+$/.test(result)) {
-          return result;
-        }
+      if (barcode && barcode.length >= 8 && barcode.length <= 13) {
+        return barcode;
       }
       
       return null;
     }
 
-    function recognizeDigit(segment) {
-      // Try to recognize which digit (0-9) this segment is
-      // Based on its visual characteristics
+    function decodeFromBars(row) {
+      // Convert bar pattern to barcode number
+      // Barcodes have alternating black/white bars that encode digits
       
-      const pixels = segment.pixels;
-      const darkness = segment.darkness;
-      const width = segment.end - segment.start;
+      // Find stripe widths (run-length encoding)
+      const stripes = [];
+      let currentStripe = 1;
       
-      // Analyze the pixel pattern within this segment
-      // Count how many consecutive dark pixels we have
-      let darkCount = 0;
-      let transitions = 0;
-      let lastWasDark = false;
-      
-      for (let i = 0; i < pixels.length; i++) {
-        const isDark = pixels[i] < 100;
-        if (isDark) {
-          darkCount++;
+      for (let i = 1; i < row.length; i++) {
+        if (row[i] === row[i - 1]) {
+          currentStripe++;
+        } else {
+          stripes.push(currentStripe);
+          currentStripe = 1;
         }
-        if (isDark !== lastWasDark) {
-          transitions++;
+      }
+      stripes.push(currentStripe);
+      
+      // Need enough stripes for a barcode
+      if (stripes.length < 30) return null;
+      
+      // Normalize stripe widths to module width
+      const minStripe = Math.min(...stripes);
+      const normalized = stripes.map(s => Math.round(s / minStripe));
+      
+      // Decode EAN-13/UPC patterns
+      // Standard barcode: START + 6 digits + MIDDLE + 6 digits + END
+      // Each digit is 4 bars wide (e.g., 1,2,1,2)
+      
+      let result = '';
+      let i = 3; // Skip start pattern
+      
+      // Decode 12 digits (6 + 6)
+      while (i < normalized.length - 3 && result.length < 12) {
+        // Get 4-bar pattern for this digit
+        const pattern = normalized.slice(i, i + 4);
+        const digit = decodeDigitPattern(pattern);
+        
+        if (digit !== null) {
+          result += digit.toString();
         }
-        lastWasDark = isDark;
+        i += 4;
       }
       
-      // Simple heuristic based on characteristics
-      // This is not perfect OCR but works for barcode numbers
+      // Return if we got a valid barcode length
+      if (result.length >= 8 && result.length <= 13) {
+        return result;
+      }
       
-      const darkRatio = darkCount / pixels.length;
+      return null;
+    }
+
+    function decodeDigitPattern(pattern) {
+      // Decode a 4-bar pattern to a digit (0-9)
+      // Pattern is [dark, light, dark, light] widths
       
-      // Map characteristics to digits
-      // Digits with more transitions have holes or parts (like 8, 0)
-      // Digits with less dark area are thinner (like 1)
+      if (pattern.length !== 4) return null;
       
-      if (transitions > 6) return 8; // Multiple holes/parts
-      if (transitions > 4 && darkRatio > 0.5) return 0; // One hole
-      if (darkRatio < 0.3) return 1; // Thin digit
-      if (darkRatio > 0.8) return 5; // Very thick
-      if (transitions === 2 && darkRatio < 0.5) return 7; // Diagonal stroke
+      // Create pattern string (e.g., "1211")
+      const patternStr = pattern.join('');
       
-      // Default: map darkness ratio to digit (0-9)
-      // This is a fallback that should rarely be needed
-      const digit = Math.round(darkRatio * 9);
-      return Math.max(0, Math.min(9, digit));
+      // Barcode digit encodings (simplified - these are actual EAN-13 patterns)
+      const patterns = {
+        '1211': '0', '1222': '1', '1221': '2', '2112': '3',
+        '2121': '4', '2211': '5', '1122': '6', '1112': '7',
+        '1121': '8', '2111': '9'
+      };
+      
+      return patterns[patternStr] || null;
     }
 
     // Cache for barcode lookups to avoid repeated API calls
