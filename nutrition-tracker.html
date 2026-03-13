@@ -1318,12 +1318,13 @@
       const width = imageData.width;
       const height = imageData.height;
       
-      // Define scanning bounds to match visual rectangle EXACTLY
+      // Define scanning bounds - 50% smaller than visual rectangle
       // Visual: width 50% (25-75%), height 8% (46-54%)
-      const bandStartY = Math.floor(height * 0.46);
-      const bandEndY = Math.floor(height * 0.54);
-      const boxStartX = Math.floor(width * 0.25);
-      const boxEndX = Math.floor(width * 0.75);
+      // Scanning: width 25% (37.5-62.5%), height 4% (48-52%)
+      const bandStartY = Math.floor(height * 0.48);
+      const bandEndY = Math.floor(height * 0.52);
+      const boxStartX = Math.floor(width * 0.375);
+      const boxEndX = Math.floor(width * 0.625);
       
       // Scan only the thin middle band
       const results = [];
