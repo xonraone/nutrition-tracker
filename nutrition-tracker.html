@@ -1308,27 +1308,22 @@
     }
 
     function detectBarcode(imageData) {
-      // Only scan the center rectangle (where the focus guide is)
+      // Only scan a thin horizontal band in the middle (where barcodes are)
       const data = imageData.data;
       const width = imageData.width;
       const height = imageData.height;
       
-      // Define the scanning rectangle (matches the focus guide)
+      // Define a thin scanning band in the middle (best focus area)
+      // Only scan the horizontal center, very thin vertical band (10% of height)
+      const bandStartY = Math.floor(height * 0.45);
+      const bandEndY = Math.floor(height * 0.55);
       const boxStartX = Math.floor(width * 0.1);
       const boxEndX = Math.floor(width * 0.9);
-      const boxStartY = Math.floor(height * 0.3);
-      const boxEndY = Math.floor(height * 0.7);
       
-      // Try to find visible numbers in the box by analyzing brightness patterns
-      // Look at the center horizontal line first for best clarity
-      const centerY = Math.floor((boxStartY + boxEndY) / 2);
-      
-      // Scan multiple rows near center and look for consistent digit patterns
+      // Scan only the thin middle band
       const results = [];
       
-      for (let y = centerY - 10; y < centerY + 10; y++) {
-        if (y < boxStartY || y > boxEndY) continue;
-        
+      for (let y = bandStartY; y < bandEndY; y++) {
         let barcodeData = '';
         let lastColor = 0;
         let count = 0;
@@ -1380,33 +1375,36 @@
     }
 
     function extractBarcodeNumbers(pattern) {
-      // Extract continuous sequences of digits from the pattern
-      // This looks for actual number sequences, not just random characters
+      // Look specifically for digit sequences in the pattern
+      // Barcodes are 8-13 digits
       
-      // Try to find digit-like sequences in the pattern
-      // A barcode typically has alternating black/white stripes
-      // We'll look for continuous digit strings in the pattern
-      
-      // First, try direct number extraction
-      const directNumbers = pattern.replace(/[^0-9]/g, '');
-      if (directNumbers.length >= 8 && directNumbers.length <= 13) {
-        return directNumbers;
+      // First, try to extract all contiguous digit sequences
+      const digitMatches = pattern.match(/\d+/g);
+      if (digitMatches) {
+        // Look for the longest digit sequence that's a valid barcode length
+        for (const match of digitMatches) {
+          if (match.length >= 8 && match.length <= 13) {
+            return match;
+          }
+        }
+        // If no perfect match, return the longest sequence that's substantial
+        if (digitMatches.length > 0) {
+          const longest = digitMatches.reduce((a, b) => a.length > b.length ? a : b);
+          if (longest.length >= 6) {
+            return longest;
+          }
+        }
       }
       
-      // If that didn't work, look for repeating patterns that might represent digits
-      // Barcodes have a rhythm - look for that
-      const stripePattern = pattern.match(/[a-z0-9]{8,}/g);
-      if (stripePattern) {
-        for (const stripe of stripePattern) {
-          // Check if this looks like a barcode stripe pattern
-          // (mix of different characters indicating different stripe widths)
-          const uniqueChars = new Set(stripe);
-          if (uniqueChars.size >= 3) { // Multiple different stripe widths
-            // Try to extract any numbers from it
-            const nums = stripe.replace(/[^0-9]/g, '');
-            if (nums.length >= 8 && nums.length <= 13) {
-              return nums;
-            }
+      // Try extracting numbers from stripe pattern if direct extraction failed
+      // Pattern shows stripe widths encoded as base36 chars
+      const stripes = pattern.match(/[a-z0-9]{5,}/g);
+      if (stripes) {
+        for (const stripe of stripes) {
+          // Look for any digit patterns in the stripe
+          const nums = stripe.replace(/[^0-9]/g, '');
+          if (nums.length >= 8 && nums.length <= 13) {
+            return nums;
           }
         }
       }
@@ -1414,30 +1412,57 @@
       return null;
     }
 
+    // Cache for barcode lookups to avoid repeated API calls
+    let barcodeCache = {};
+
     function searchBarcodeInOpenFoodFacts(barcode, statusDiv) {
+      // Check cache first - instant lookup
+      if (barcodeCache[barcode]) {
+        const cached = barcodeCache[barcode];
+        document.getElementById('food-name').value = cached.name;
+        document.getElementById('food-protein').value = cached.protein;
+        document.getElementById('food-carbs').value = cached.carbs;
+        document.getElementById('food-fat').value = cached.fat;
+        document.getElementById('food-fiber').value = cached.fiber;
+        document.getElementById('food-sugar').value = cached.sugar;
+        calculateCalories();
+        statusDiv.textContent = `✅ Found: ${cached.name}`;
+        setTimeout(() => closeBarcodeScanner(), 1500);
+        return;
+      }
+      
       statusDiv.textContent = `🔍 Searching for barcode: ${barcode}...`;
       
-      // Try multiple CORS proxies in order of reliability
+      // Try fastest proxies first
       const proxyUrls = [
+        // Direct API with short timeout (fastest if working)
+        `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`,
+        // Fastest CORS proxy
         `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`)}`,
+        // Backup CORS proxy
         `https://corsproxy.io/?${encodeURIComponent(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`)}`,
-        `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`
       ];
       
       let attemptIndex = 0;
+      let completed = false;
       
-      const tryFetch = () => {
-        if (attemptIndex >= proxyUrls.length) {
-          statusDiv.textContent = '❌ Unable to connect to database. Use manual entry.';
-          return;
-        }
+      const tryFetch = (timeout = 4000) => {
+        if (completed || attemptIndex >= proxyUrls.length) return;
         
-        fetch(proxyUrls[attemptIndex])
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+        
+        fetch(proxyUrls[attemptIndex], { signal: controller.signal })
           .then(response => {
+            clearTimeout(timeoutId);
             if (!response.ok) throw new Error('API returned error');
             return response.json();
           })
           .then(data => {
+            if (completed) return;
+            completed = true;
+            clearTimeout(timeoutId);
+            
             // Handle different response formats from different proxies
             const product = data.product || data;
             
@@ -1449,6 +1474,9 @@
               const fat = product.nutriments?.fat || 0;
               const fiber = product.nutriments?.fiber || 0;
               const sugar = product.nutriments?.sugars || 0;
+              
+              // Cache the result
+              barcodeCache[barcode] = { name, protein, carbs, fat, fiber, sugar };
               
               // Fill in the form
               document.getElementById('food-name').value = name;
@@ -1467,17 +1495,23 @@
             }
           })
           .catch(err => {
+            clearTimeout(timeoutId);
+            if (completed) return;
+            
             attemptIndex++;
             if (attemptIndex < proxyUrls.length) {
-              statusDiv.textContent = `🔄 Trying alternative connection...`;
-              setTimeout(tryFetch, 500);
+              statusDiv.textContent = `🔄 Trying faster connection...`;
+              // Try next proxy with slightly longer timeout
+              tryFetch(attemptIndex === 1 ? 5000 : 6000);
             } else {
-              statusDiv.textContent = '❌ Error connecting. Try manual entry.';
-              console.error('API error:', err);
+              completed = true;
+              statusDiv.textContent = '❌ Search took too long. Try manual entry.';
+              console.error('Barcode search failed:', err);
             }
           });
       };
       
+      // Start search immediately without delay
       tryFetch();
     }
 
