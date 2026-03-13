@@ -1222,6 +1222,9 @@
     function scanBarcodeFrames(video, statusDiv) {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
+      let detectedBarcode = null;
+      let confidenceCount = 0;
+      const confidenceThreshold = 5; // Need to detect same barcode 5 times
       
       const scan = () => {
         if (!barcodeStream) return;
@@ -1237,8 +1240,31 @@
           const barcode = detectBarcode(imageData);
           
           if (barcode) {
-            searchBarcodeInOpenFoodFacts(barcode, statusDiv);
-            return;
+            if (barcode === detectedBarcode) {
+              // Same barcode detected again
+              confidenceCount++;
+              const percent = Math.round((confidenceCount / confidenceThreshold) * 100);
+              statusDiv.textContent = `📊 Confidence: ${percent}% - ${barcode}`;
+              
+              if (confidenceCount >= confidenceThreshold) {
+                // High confidence - search for this barcode
+                statusDiv.textContent = `✅ Barcode confirmed: ${barcode}`;
+                searchBarcodeInOpenFoodFacts(barcode, statusDiv);
+                return;
+              }
+            } else {
+              // Different barcode detected - reset confidence
+              detectedBarcode = barcode;
+              confidenceCount = 1;
+              statusDiv.textContent = `📊 Confidence: 20% - ${barcode}`;
+            }
+          } else {
+            // No barcode detected this frame
+            if (detectedBarcode) {
+              detectedBarcode = null;
+              confidenceCount = 0;
+              statusDiv.textContent = 'Point camera at barcode...';
+            }
           }
         }
         
@@ -1298,45 +1324,68 @@
     function searchBarcodeInOpenFoodFacts(barcode, statusDiv) {
       statusDiv.textContent = `🔍 Searching for barcode: ${barcode}...`;
       
-      // Use CORS proxy to bypass browser restrictions
-      const corsProxy = 'https://cors-anywhere.herokuapp.com/';
-      const apiUrl = `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`;
+      // Try multiple CORS proxies in order of reliability
+      const proxyUrls = [
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`)}`,
+        `https://corsproxy.io/?${encodeURIComponent(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`)}`,
+        `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`
+      ];
       
-      fetch(corsProxy + apiUrl)
-        .then(response => response.json())
-        .then(data => {
-          if (data.status === 1 && data.product) {
-            const product = data.product;
+      let attemptIndex = 0;
+      
+      const tryFetch = () => {
+        if (attemptIndex >= proxyUrls.length) {
+          statusDiv.textContent = '❌ Unable to connect to database. Use manual entry.';
+          return;
+        }
+        
+        fetch(proxyUrls[attemptIndex])
+          .then(response => {
+            if (!response.ok) throw new Error('API returned error');
+            return response.json();
+          })
+          .then(data => {
+            // Handle different response formats from different proxies
+            const product = data.product || data;
             
-            // Extract nutrition information
-            const name = product.product_name || 'Unknown Product';
-            const calories = product.nutriments?.['energy-kcal'] || 0;
-            const protein = product.nutriments?.proteins || 0;
-            const carbs = product.nutriments?.carbohydrates || 0;
-            const fat = product.nutriments?.fat || 0;
-            const fiber = product.nutriments?.fiber || 0;
-            const sugar = product.nutriments?.sugars || 0;
-            
-            // Fill in the form
-            document.getElementById('food-name').value = name;
-            document.getElementById('food-protein').value = protein.toFixed(1);
-            document.getElementById('food-carbs').value = carbs.toFixed(1);
-            document.getElementById('food-fat').value = fat.toFixed(1);
-            document.getElementById('food-fiber').value = fiber.toFixed(1);
-            document.getElementById('food-sugar').value = sugar.toFixed(1);
-            
-            calculateCalories();
-            
-            statusDiv.textContent = `✅ Found: ${name}`;
-            setTimeout(() => closeBarcodeScanner(), 1500);
-          } else {
-            statusDiv.textContent = `❌ Product not found. Barcode: ${barcode}`;
-          }
-        })
-        .catch(err => {
-          statusDiv.textContent = '❌ Error searching database. Try manual entry.';
-          console.error('API error:', err);
-        });
+            if (data.status === 1 || (product && product.product_name)) {
+              const name = product.product_name || 'Unknown Product';
+              const calories = product.nutriments?.['energy-kcal'] || 0;
+              const protein = product.nutriments?.proteins || 0;
+              const carbs = product.nutriments?.carbohydrates || 0;
+              const fat = product.nutriments?.fat || 0;
+              const fiber = product.nutriments?.fiber || 0;
+              const sugar = product.nutriments?.sugars || 0;
+              
+              // Fill in the form
+              document.getElementById('food-name').value = name;
+              document.getElementById('food-protein').value = protein.toFixed(1);
+              document.getElementById('food-carbs').value = carbs.toFixed(1);
+              document.getElementById('food-fat').value = fat.toFixed(1);
+              document.getElementById('food-fiber').value = fiber.toFixed(1);
+              document.getElementById('food-sugar').value = sugar.toFixed(1);
+              
+              calculateCalories();
+              
+              statusDiv.textContent = `✅ Found: ${name}`;
+              setTimeout(() => closeBarcodeScanner(), 1500);
+            } else {
+              statusDiv.textContent = `❌ Product not found for barcode: ${barcode}`;
+            }
+          })
+          .catch(err => {
+            attemptIndex++;
+            if (attemptIndex < proxyUrls.length) {
+              statusDiv.textContent = `🔄 Trying alternative connection...`;
+              setTimeout(tryFetch, 500);
+            } else {
+              statusDiv.textContent = '❌ Error connecting. Try manual entry.';
+              console.error('API error:', err);
+            }
+          });
+      };
+      
+      tryFetch();
     }
 
     function filterSavedFoods(searchTerm) {
