@@ -1308,18 +1308,26 @@
     }
 
     function detectBarcode(imageData) {
-      // Simple barcode detection using pattern matching
+      // Only scan the center rectangle (where the focus guide is)
       const data = imageData.data;
       const width = imageData.width;
       const height = imageData.height;
       
-      // Convert to grayscale and detect vertical lines
-      for (let y = Math.floor(height * 0.3); y < Math.floor(height * 0.7); y++) {
+      // Define the scanning rectangle (matches the focus guide)
+      // Focus guide is centered, 80% of screen, so scanning box is centered too
+      const boxStartX = Math.floor(width * 0.1);
+      const boxEndX = Math.floor(width * 0.9);
+      const boxStartY = Math.floor(height * 0.3);
+      const boxEndY = Math.floor(height * 0.7);
+      
+      // Scan only within the box area
+      for (let y = boxStartY; y < boxEndY; y++) {
         let barcodeData = '';
         let lastColor = 0;
         let count = 0;
         
-        for (let x = 0; x < width; x++) {
+        // Only scan the horizontal range (left to right within the box)
+        for (let x = boxStartX; x < boxEndX; x++) {
           const idx = (y * width + x) * 4;
           const gray = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
           const color = gray > 128 ? 1 : 0;
@@ -1333,7 +1341,7 @@
           }
         }
         
-        // Look for barcode-like patterns
+        // Look for barcode-like patterns only in the box
         if (barcodeData.length > 20 && Math.random() < 0.1) {
           // Found potential barcode, try to extract numbers
           const match = extractBarcodeNumbers(barcodeData);
