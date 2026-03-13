@@ -1214,7 +1214,7 @@
 
       // Request camera access
       navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' }
+        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
       }).then(stream => {
         barcodeStream = stream;
         video.srcObject = stream;
@@ -1243,7 +1243,7 @@
       const ctx = canvas.getContext('2d');
       let detectedBarcode = null;
       let confidenceCount = 0;
-      const confidenceThreshold = 8; // Increased to 8 for less sensitivity
+      const confidenceThreshold = 5;
       let lastStatusUpdate = 0;
       
       const scan = () => {
@@ -1256,48 +1256,43 @@
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
           const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
           
-          // Try to detect barcode using simple edge detection
+          // Try to detect barcode
           const barcode = detectBarcode(imageData);
           
           if (barcode) {
             if (barcode === detectedBarcode) {
-              // Same barcode detected again
               confidenceCount++;
               const percent = Math.round((confidenceCount / confidenceThreshold) * 100);
               
-              // Only update status every few frames to reduce flickering
               const now = Date.now();
-              if (now - lastStatusUpdate > 200) {
-                statusDiv.textContent = `📊 Confidence: ${percent}% - ${barcode}`;
+              if (now - lastStatusUpdate > 300) {
+                statusDiv.textContent = `🔍 Found: ${barcode} (${percent}%)`;
                 document.getElementById('rescan-camera-btn').style.display = 'block';
                 lastStatusUpdate = now;
               }
               
               if (confidenceCount >= confidenceThreshold) {
-                // High confidence - search for this barcode
-                statusDiv.textContent = `✅ Barcode confirmed: ${barcode}`;
+                statusDiv.textContent = `✅ Scanning: ${barcode}`;
                 document.getElementById('rescan-camera-btn').style.display = 'none';
                 searchBarcodeInOpenFoodFacts(barcode, statusDiv);
                 return;
               }
             } else {
-              // Different barcode detected - reset confidence
               detectedBarcode = barcode;
               confidenceCount = 1;
               const now = Date.now();
-              if (now - lastStatusUpdate > 200) {
-                statusDiv.textContent = `📊 Confidence: 12% - ${barcode}`;
+              if (now - lastStatusUpdate > 300) {
+                statusDiv.textContent = `🔍 Found: ${barcode}`;
                 document.getElementById('rescan-camera-btn').style.display = 'block';
                 lastStatusUpdate = now;
               }
             }
           } else {
-            // No barcode detected this frame
             if (detectedBarcode) {
               detectedBarcode = null;
               confidenceCount = 0;
               const now = Date.now();
-              if (now - lastStatusUpdate > 200) {
+              if (now - lastStatusUpdate > 300) {
                 statusDiv.textContent = 'Point camera at barcode...';
                 document.getElementById('rescan-camera-btn').style.display = 'none';
                 lastStatusUpdate = now;
@@ -1313,58 +1308,43 @@
     }
 
     function detectBarcode(imageData) {
-      // Scan a very small tight area
+      // Simple approach: look for high contrast black/white stripes in scanning area
       const data = imageData.data;
       const width = imageData.width;
       const height = imageData.height;
       
-      // Scanning bounds - 50% smaller than before
-      // Previous: width 40% (30-70%), height 10% (45-55%)
-      // New: width 20% (40-60%), height 5% (47.5-52.5%)
+      // Scan the center area (20% width, 5% height as per visual guide)
       const bandStartY = Math.floor(height * 0.475);
       const bandEndY = Math.floor(height * 0.525);
       const boxStartX = Math.floor(width * 0.40);
       const boxEndX = Math.floor(width * 0.60);
       
-      // Scan only the thin middle band
+      // Scan multiple rows and look for barcode stripe pattern
       const results = [];
       
       for (let y = bandStartY; y < bandEndY; y++) {
-        let barcodeData = '';
-        let lastColor = 0;
-        let count = 0;
-        
-        // Scan left to right within the box
+        // Extract brightness values for this row
+        const row = [];
         for (let x = boxStartX; x < boxEndX; x++) {
           const idx = (y * width + x) * 4;
-          const gray = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
-          const color = gray > 128 ? 1 : 0;
-          
-          if (color !== lastColor) {
-            barcodeData += count.toString(36);
-            count = 1;
-            lastColor = color;
-          } else {
-            count++;
-          }
+          const brightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+          row.push(brightness > 128 ? 1 : 0);
         }
         
-        // Try to extract numbers from this row
-        const match = extractBarcodeNumbers(barcodeData);
-        if (match) {
-          results.push(match);
+        // Look for barcode pattern: alternating black/white bars
+        // Barcodes have distinct stripe patterns
+        if (row.length > 20) {
+          const barcode = decodeBarcode(row);
+          if (barcode) {
+            results.push(barcode);
+          }
         }
       }
       
-      // Return the most common result (stable across multiple rows)
+      // Return most common barcode detected
       if (results.length > 0) {
-        // Count occurrences of each barcode
         const counts = {};
-        results.forEach(barcode => {
-          counts[barcode] = (counts[barcode] || 0) + 1;
-        });
-        
-        // Return the barcode that appeared most
+        results.forEach(b => counts[b] = (counts[b] || 0) + 1);
         let bestBarcode = results[0];
         let maxCount = 1;
         for (const barcode in counts) {
@@ -1373,45 +1353,56 @@
             bestBarcode = barcode;
           }
         }
-        
         return bestBarcode;
       }
       
       return null;
     }
 
-    function extractBarcodeNumbers(pattern) {
-      // Look specifically for digit sequences in the pattern
-      // Barcodes are 8-13 digits
+    function decodeBarcode(row) {
+      // Convert binary stripe pattern to potential barcode numbers
+      // Barcodes use stripe widths to encode digits
       
-      // First, try to extract all contiguous digit sequences
-      const digitMatches = pattern.match(/\d+/g);
-      if (digitMatches) {
-        // Look for the longest digit sequence that's a valid barcode length
-        for (const match of digitMatches) {
-          if (match.length >= 8 && match.length <= 13) {
-            return match;
-          }
+      // Look for the start/stop patterns and attempt to extract digits
+      const stripePattern = [];
+      let currentStripe = 1;
+      let count = 1;
+      
+      for (let i = 1; i < row.length; i++) {
+        if (row[i] === row[i - 1]) {
+          count++;
+        } else {
+          stripePattern.push(count);
+          count = 1;
         }
-        // If no perfect match, return the longest sequence that's substantial
-        if (digitMatches.length > 0) {
-          const longest = digitMatches.reduce((a, b) => a.length > b.length ? a : b);
-          if (longest.length >= 6) {
-            return longest;
-          }
+      }
+      stripePattern.push(count);
+      
+      // If we have enough distinct stripes, this might be a barcode
+      if (stripePattern.length < 15) return null;
+      
+      // Extract digits from stripe widths
+      // Standard barcode: 95 modules total, with specific patterns for each digit
+      const digits = [];
+      
+      // Simplified: look for patterns of 1:1, 1:2, 2:1, etc. ratios
+      // These correspond to barcode digits
+      for (let i = 0; i < stripePattern.length - 3; i += 4) {
+        const ratio1 = stripePattern[i] / Math.max(1, stripePattern[i + 1]);
+        const ratio2 = stripePattern[i + 2] / Math.max(1, stripePattern[i + 3]);
+        
+        // Map ratios to digits (very simplified)
+        if (ratio1 < 1.5 && ratio2 < 1.5) {
+          digits.push(Math.floor((ratio1 + ratio2) * 5) % 10);
         }
       }
       
-      // Try extracting numbers from stripe pattern if direct extraction failed
-      // Pattern shows stripe widths encoded as base36 chars
-      const stripes = pattern.match(/[a-z0-9]{5,}/g);
-      if (stripes) {
-        for (const stripe of stripes) {
-          // Look for any digit patterns in the stripe
-          const nums = stripe.replace(/[^0-9]/g, '');
-          if (nums.length >= 8 && nums.length <= 13) {
-            return nums;
-          }
+      // Need at least 8 digits for a valid barcode
+      if (digits.length >= 8) {
+        const barcode = digits.join('');
+        // Basic validation: all characters are digits
+        if (/^\d{8,13}$/.test(barcode)) {
+          return barcode;
         }
       }
       
