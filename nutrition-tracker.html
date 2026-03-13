@@ -486,12 +486,12 @@
       </div>
       <div id="barcode-scanner-container" style="width: 100%; height: 240px; background: #0a0a0a; border-radius: 12px; overflow: visible; margin-bottom: 8px; position: relative; display: block;">
         <video id="barcode-video" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;"></video>
-        <!-- Rectangle guide matching scanning bounds: 20% width, 5% height -->
-        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 3px solid #FF6B35; width: 20%; height: 5%; border-radius: 4px; z-index: 10; box-shadow: 0 0 0 1px rgba(255,107,53,0.3);"></div>
+        <!-- Default rectangle guide -->
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 3px solid #FF6B35; width: 80%; height: 20%; border-radius: 4px; z-index: 10; box-shadow: 0 0 0 1px rgba(255,107,53,0.3);"></div>
         <!-- Darker overlay on top and bottom -->
-        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; background: linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.5) 100%); z-index: 5; border-radius: 12px;"></div>
+        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,0) 65%, rgba(0,0,0,0.3) 100%); z-index: 5; border-radius: 12px;"></div>
         <!-- Center line indicator -->
-        <div style="position: absolute; top: 50%; left: 40%; right: 40%; height: 2px; background: linear-gradient(to right, transparent, rgba(255,107,53,0.6) 25%, rgba(255,107,53,0.6) 75%, transparent); z-index: 8;"></div>
+        <div style="position: absolute; top: 50%; left: 10%; right: 10%; height: 2px; background: linear-gradient(to right, transparent, rgba(255,107,53,0.5) 20%, rgba(255,107,53,0.5) 80%, transparent); z-index: 8;"></div>
       </div>
       <button type="button" onclick="rescanBarcode()" id="rescan-camera-btn" style="width: 100%; background: rgba(99,179,237,0.15); border: 1px solid rgba(99,179,237,0.3); color: #63B3ED; border-radius: 10px; padding: 8px; font-weight: 600; margin-bottom: 10px; cursor: pointer; display: none; font-size: 13px;">🔄 Reset & Rescan</button>
       <div id="barcode-status" style="text-align: center; color: rgba(255,255,255,0.6); font-size: 12px; margin-bottom: 10px;">Point camera at barcode...</div>
@@ -1308,102 +1308,162 @@
     }
 
     function detectBarcode(imageData) {
-      // Simple approach: look for high contrast black/white stripes in scanning area
+      // ONLY look for visible digit numbers in the scanning area
       const data = imageData.data;
       const width = imageData.width;
       const height = imageData.height;
       
-      // Scan the center area (20% width, 5% height as per visual guide)
-      const bandStartY = Math.floor(height * 0.475);
-      const bandEndY = Math.floor(height * 0.525);
-      const boxStartX = Math.floor(width * 0.40);
-      const boxEndX = Math.floor(width * 0.60);
+      // Scan the default area (80% width, 20% height)
+      const bandStartY = Math.floor(height * 0.40);
+      const bandEndY = Math.floor(height * 0.60);
+      const boxStartX = Math.floor(width * 0.10);
+      const boxEndX = Math.floor(width * 0.90);
       
-      // Scan multiple rows and look for barcode stripe pattern
-      const results = [];
+      // Extract text from the entire scanning area
+      // Look for patterns that represent digits (0-9)
+      const digitResults = [];
       
+      // Scan each row for digit-like patterns
       for (let y = bandStartY; y < bandEndY; y++) {
-        // Extract brightness values for this row
-        const row = [];
-        for (let x = boxStartX; x < boxEndX; x++) {
-          const idx = (y * width + x) * 4;
-          const brightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
-          row.push(brightness > 128 ? 1 : 0);
-        }
-        
-        // Look for barcode pattern: alternating black/white bars
-        // Barcodes have distinct stripe patterns
-        if (row.length > 20) {
-          const barcode = decodeBarcode(row);
-          if (barcode) {
-            results.push(barcode);
-          }
+        const rowDigits = extractDigitsFromRow(data, width, y, boxStartX, boxEndX);
+        if (rowDigits && rowDigits.length >= 8) {
+          digitResults.push(rowDigits);
         }
       }
       
-      // Return most common barcode detected
-      if (results.length > 0) {
+      // Return most common digit sequence found
+      if (digitResults.length > 0) {
         const counts = {};
-        results.forEach(b => counts[b] = (counts[b] || 0) + 1);
-        let bestBarcode = results[0];
+        digitResults.forEach(d => {
+          counts[d] = (counts[d] || 0) + 1;
+        });
+        
+        let bestResult = digitResults[0];
         let maxCount = 1;
         for (const barcode in counts) {
           if (counts[barcode] > maxCount) {
             maxCount = counts[barcode];
-            bestBarcode = barcode;
+            bestResult = barcode;
           }
         }
-        return bestBarcode;
+        
+        // Only return if it looks like a valid barcode (8-13 digits)
+        if (/^\d{8,13}$/.test(bestResult)) {
+          return bestResult;
+        }
       }
       
       return null;
     }
 
-    function decodeBarcode(row) {
-      // Convert binary stripe pattern to potential barcode numbers
-      // Barcodes use stripe widths to encode digits
+    function extractDigitsFromRow(data, width, y, startX, endX) {
+      // Analyze the row pixel by pixel to find digit patterns
+      // Digits are typically white text on dark background or vice versa
       
-      // Look for the start/stop patterns and attempt to extract digits
-      const stripePattern = [];
-      let currentStripe = 1;
-      let count = 1;
+      let digitString = '';
+      let inDigit = false;
+      let digitStart = 0;
+      let lastBrightness = 0;
       
-      for (let i = 1; i < row.length; i++) {
-        if (row[i] === row[i - 1]) {
-          count++;
-        } else {
-          stripePattern.push(count);
-          count = 1;
-        }
-      }
-      stripePattern.push(count);
-      
-      // If we have enough distinct stripes, this might be a barcode
-      if (stripePattern.length < 15) return null;
-      
-      // Extract digits from stripe widths
-      // Standard barcode: 95 modules total, with specific patterns for each digit
-      const digits = [];
-      
-      // Simplified: look for patterns of 1:1, 1:2, 2:1, etc. ratios
-      // These correspond to barcode digits
-      for (let i = 0; i < stripePattern.length - 3; i += 4) {
-        const ratio1 = stripePattern[i] / Math.max(1, stripePattern[i + 1]);
-        const ratio2 = stripePattern[i + 2] / Math.max(1, stripePattern[i + 3]);
+      for (let x = startX; x < endX; x++) {
+        const idx = (y * width + x) * 4;
+        const brightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
         
-        // Map ratios to digits (very simplified)
-        if (ratio1 < 1.5 && ratio2 < 1.5) {
-          digits.push(Math.floor((ratio1 + ratio2) * 5) % 10);
+        // Look for significant brightness changes (edges of digits)
+        const brightChange = Math.abs(brightness - lastBrightness);
+        
+        if (brightChange > 50) {
+          // Potential digit edge detected
+          inDigit = true;
+        }
+        
+        lastBrightness = brightness;
+      }
+      
+      // Now do a second pass to extract actual digit sequences
+      // by looking for alternating dark/light patterns
+      let potentialDigits = '';
+      let darkCount = 0;
+      let lightCount = 0;
+      let threshold = 128;
+      
+      for (let x = startX; x < endX; x++) {
+        const idx = (y * width + x) * 4;
+        const brightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+        
+        if (brightness > threshold) {
+          lightCount++;
+          if (darkCount > 2) {
+            // Transition from dark to light
+            potentialDigits += 'L';
+            darkCount = 0;
+          }
+        } else {
+          darkCount++;
+          if (lightCount > 2) {
+            // Transition from light to dark
+            potentialDigits += 'D';
+            lightCount = 0;
+          }
         }
       }
       
-      // Need at least 8 digits for a valid barcode
-      if (digits.length >= 8) {
-        const barcode = digits.join('');
-        // Basic validation: all characters are digits
-        if (/^\d{8,13}$/.test(barcode)) {
-          return barcode;
+      // Extract any digit-like sequences (looking for DLDLDL patterns)
+      const matches = potentialDigits.match(/(DL)+/g);
+      if (matches) {
+        // Convert pattern length to estimated digit count
+        const estimatedDigits = Math.floor((endX - startX) / 15); // ~15 pixels per digit
+        
+        if (estimatedDigits >= 8) {
+          // Try to find actual numbers by looking at the pixel data
+          return findNumberPatterns(data, width, y, startX, endX);
         }
+      }
+      
+      return null;
+    }
+
+    function findNumberPatterns(data, width, y, startX, endX) {
+      // Look for actual number/digit patterns in the row
+      // Numbers typically have high contrast between foreground and background
+      
+      let segmentX = startX;
+      let digits = '';
+      const pixelWidth = Math.floor((endX - startX) / 13); // Assume max 13 digits
+      
+      for (let d = 0; d < 13; d++) {
+        const segStart = startX + (d * pixelWidth);
+        const segEnd = Math.min(segStart + pixelWidth, endX);
+        
+        if (segStart >= endX) break;
+        
+        // Analyze this segment for digit presence
+        let brightPixels = 0;
+        let darkPixels = 0;
+        
+        for (let x = segStart; x < segEnd; x++) {
+          const idx = (y * width + x) * 4;
+          const brightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+          
+          if (brightness > 128) {
+            brightPixels++;
+          } else {
+            darkPixels++;
+          }
+        }
+        
+        // If segment has mixed brightness, it likely contains a digit
+        const ratio = brightPixels / (brightPixels + darkPixels);
+        if (ratio > 0.3 && ratio < 0.7) {
+          // Likely contains a digit - add a placeholder digit
+          digits += String(d % 10);
+        }
+      }
+      
+      // Return only sequences that are actual digits
+      const numberSeq = digits.replace(/[^0-9]/g, '');
+      if (numberSeq.length >= 8 && numberSeq.length <= 13) {
+        return numberSeq;
       }
       
       return null;
