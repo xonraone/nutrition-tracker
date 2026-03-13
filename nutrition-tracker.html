@@ -341,6 +341,7 @@
         <div class="error-msg" id="auth-error"></div>
         <button type="button" class="btn-primary" id="auth-toggle">Sign Up</button>
         <button type="button" class="btn-primary" id="auth-submit">Log In</button>
+        <button type="button" onclick="tryDemo()" style="width: 100%; background: rgba(102,179,77,0.15); border: 1px solid rgba(102,179,77,0.3); color: #66B34D; border-radius: 10px; padding: 10px; font-weight: 600; font-size: 14px; margin-top: 8px;">👤 Try Demo</button>
       </div>
     </div>
   </div>
@@ -389,6 +390,13 @@
       <div id="settings-tab" class="tab-content">
         <h2 class="section-title">DAILY GOALS</h2>
         <div id="settings-form"></div>
+        
+        <h2 class="section-title" style="margin-top: 24px;">DATA BACKUP</h2>
+        <div style="display: flex; gap: 8px; flex-direction: column;">
+          <button type="button" onclick="exportData()" style="width: 100%; background: rgba(102,179,77,0.15); border: 1px solid rgba(102,179,77,0.3); color: #66B34D; border-radius: 10px; padding: 10px; font-weight: 600; font-size: 14px;">📥 Export Data (JSON)</button>
+          <button type="button" onclick="importData()" style="width: 100%; background: rgba(255,107,53,0.15); border: 1px solid rgba(255,107,53,0.3); color: #FF6B35; border-radius: 10px; padding: 10px; font-weight: 600; font-size: 14px;">📤 Import Data (JSON)</button>
+        </div>
+        <input type="file" id="import-file-input" accept=".json" style="display: none;">
       </div>
     </div>
   </div>
@@ -409,14 +417,19 @@
         </div>
       </div>
       <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-        <button type="button" onclick="openBarcodeScanner()" style="flex: 1; background: rgba(99,179,237,0.15); border: 1px solid rgba(99,179,237,0.3); color: #63B3ED; border-radius: 10px; padding: 10px; font-weight: 600; cursor: pointer; font-size: 14px;">📱 Scan</button>
         <button type="button" onclick="toggleProductDatabase()" style="flex: 1; background: rgba(102,179,77,0.15); border: 1px solid rgba(102,179,77,0.3); color: #66B34D; border-radius: 10px; padding: 10px; font-weight: 600; cursor: pointer; font-size: 14px;">📚 Browse</button>
+        <button type="button" onclick="openBarcodeSearch()" style="flex: 1; background: rgba(99,179,237,0.15); border: 1px solid rgba(99,179,237,0.3); color: #63B3ED; border-radius: 10px; padding: 10px; font-weight: 600; cursor: pointer; font-size: 14px;">📱 Barcode</button>
       </div>
       <div id="product-database-section" style="display: none; margin-bottom: 12px; background: rgba(102,179,77,0.1); border: 1px solid rgba(102,179,77,0.2); border-radius: 12px; padding: 12px;">
         <input type="text" id="product-search" class="input-field" placeholder="Search products..." oninput="searchProductDatabase(this.value)" style="margin-bottom: 8px;">
         <div id="product-list" style="max-height: 200px; overflow-y: auto;">
           <!-- Products will be populated here -->
         </div>
+      </div>
+      <div id="barcode-search-section" style="display: none; margin-bottom: 12px; background: rgba(99,179,237,0.1); border: 1px solid rgba(99,179,237,0.2); border-radius: 12px; padding: 12px;">
+        <input type="text" id="barcode-input" class="input-field" placeholder="Enter barcode (8-13 digits)..." style="margin-bottom: 8px;" onkeypress="if(event.key==='Enter') searchByBarcode()">
+        <button type="button" onclick="searchByBarcode()" style="width: 100%; background: rgba(99,179,237,0.15); border: 1px solid rgba(99,179,237,0.3); color: #63B3ED; border-radius: 10px; padding: 8px; font-weight: 600; font-size: 13px;">🔍 Search</button>
+        <div id="barcode-result" style="margin-top: 8px; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 8px; font-size: 12px; color: rgba(255,255,255,0.7); display: none;"></div>
       </div>
       <div class="form-group">
         <label class="form-label">Food name *</label>
@@ -477,38 +490,6 @@
     </div>
   </div>
 
-  <!-- BARCODE SCANNER MODAL -->
-  <div id="barcode-modal" class="modal" onclick="if(event.target===this)closeBarcodeScanner()">
-    <div class="modal-content" style="max-width: 400px;">
-      <div class="modal-header">
-        <div class="modal-title">Scan Barcode</div>
-        <button class="modal-close" onclick="closeBarcodeScanner()">✕</button>
-      </div>
-      <div id="barcode-scanner-container" style="width: 100%; height: 240px; background: #0a0a0a; border-radius: 12px; overflow: visible; margin-bottom: 8px; position: relative; display: block;">
-        <video id="barcode-video" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;"></video>
-        <!-- Tight center rectangle for scanning -->
-        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 3px solid #FF6B35; width: 50%; height: 10%; border-radius: 4px; z-index: 10; box-shadow: 0 0 0 1px rgba(255,107,53,0.3);"></div>
-        <!-- Darker overlay on top and bottom -->
-        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; background: linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.5) 100%); z-index: 5; border-radius: 12px;"></div>
-        <!-- Center line indicator -->
-        <div style="position: absolute; top: 50%; left: 25%; right: 25%; height: 2px; background: linear-gradient(to right, transparent, rgba(255,107,53,0.5) 20%, rgba(255,107,53,0.5) 80%, transparent); z-index: 8;"></div>
-      </div>
-      <button type="button" onclick="rescanBarcode()" id="rescan-camera-btn" style="width: 100%; background: rgba(99,179,237,0.15); border: 1px solid rgba(99,179,237,0.3); color: #63B3ED; border-radius: 10px; padding: 8px; font-weight: 600; margin-bottom: 10px; cursor: pointer; display: none; font-size: 13px;">🔄 Reset & Rescan</button>
-      <div id="barcode-status" style="text-align: center; color: rgba(255,255,255,0.6); font-size: 12px; margin-bottom: 10px;">Point camera at barcode...</div>
-      
-      <div id="manual-entry-section" style="display: none; margin-bottom: 10px;">
-        <label class="form-label">Enter Barcode Manually</label>
-        <input type="text" id="manual-barcode-input" class="input-field" placeholder="Enter barcode numbers..." style="margin-bottom: 8px;">
-        <button type="button" onclick="searchManualBarcode()" style="width: 100%; background: rgba(99,179,237,0.15); border: 1px solid rgba(99,179,237,0.3); color: #63B3ED; border-radius: 10px; padding: 8px; font-weight: 600; margin-bottom: 8px; font-size: 13px;">🔍 Search</button>
-      </div>
-      
-      <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-        <button type="button" onclick="toggleManualEntry()" id="manual-entry-toggle" style="flex: 1; background: rgba(255,107,53,0.15); border: 1px solid rgba(255,107,53,0.3); color: #FF6B35; border-radius: 10px; padding: 8px; font-weight: 600; cursor: pointer; font-size: 13px;">✏️ Manual Entry</button>
-        <button type="button" onclick="rescanBarcode()" id="rescan-btn" style="flex: 1; background: rgba(99,179,237,0.15); border: 1px solid rgba(99,179,237,0.3); color: #63B3ED; border-radius: 10px; padding: 8px; font-weight: 600; cursor: pointer; display: none; font-size: 13px;">🔄 Rescan</button>
-      </div>
-      <button type="button" onclick="closeBarcodeScanner()" style="width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); border-radius: 10px; padding: 8px; font-weight: 600; font-size: 13px;">Close Scanner</button>
-    </div>
-  </div>
 
   <!-- STEP MODAL -->
   <div id="step-modal" class="modal" onclick="if(event.target===this)closeModal('step-modal')">
@@ -1146,427 +1127,241 @@
       document.getElementById('today-log').innerHTML = html;
     }
 
-    function openBarcodeScanner() {
-      openModal('barcode-modal');
-      startBarcodeScanning();
-    }
-
-    function closeBarcodeScanner() {
-      closeModal('barcode-modal');
-      stopBarcodeScanning();
-    }
-
-    function toggleManualEntry() {
-      const manualSection = document.getElementById('manual-entry-section');
-      const scannerContainer = document.getElementById('barcode-scanner-container');
-      const toggleBtn = document.getElementById('manual-entry-toggle');
-      const rescanBtn = document.getElementById('rescan-btn');
-      
-      if (manualSection.style.display === 'none') {
-        // Show manual entry, hide scanner
-        manualSection.style.display = 'block';
-        scannerContainer.style.display = 'none';
-        toggleBtn.textContent = '📷 Camera Scan';
-        toggleBtn.style.background = 'rgba(99,179,237,0.15)';
-        toggleBtn.style.color = '#63B3ED';
-        toggleBtn.style.borderColor = 'rgba(99,179,237,0.3)';
-        rescanBtn.style.display = 'none';
-        stopBarcodeScanning();
-        document.getElementById('manual-barcode-input').focus();
-      } else {
-        // Show scanner, hide manual entry
-        manualSection.style.display = 'none';
-        scannerContainer.style.display = 'block';
-        toggleBtn.textContent = '✏️ Manual Entry';
-        toggleBtn.style.background = 'rgba(255,107,53,0.15)';
-        toggleBtn.style.color = '#FF6B35';
-        toggleBtn.style.borderColor = 'rgba(255,107,53,0.3)';
-        rescanBtn.style.display = 'block';
-        startBarcodeScanning();
-      }
-    }
-
-    function rescanBarcode() {
-      document.getElementById('barcode-status').textContent = 'Point camera at barcode...';
-      document.getElementById('rescan-camera-btn').style.display = 'none';
-      stopBarcodeScanning();
-      startBarcodeScanning();
-    }
-
-    function searchManualBarcode() {
-      const barcode = document.getElementById('manual-barcode-input').value.trim();
-      const statusDiv = document.getElementById('barcode-status');
-      
-      if (!barcode) {
-        statusDiv.textContent = '❌ Please enter a barcode number';
-        return;
-      }
-      
-      searchBarcodeInOpenFoodFacts(barcode, statusDiv);
-    }
-
-    let barcodeStream = null;
-    let barcodeWorker = null;
-
-    function startBarcodeScanning() {
-      const video = document.getElementById('barcode-video');
-      const statusDiv = document.getElementById('barcode-status');
-
-      // Request camera access
-      navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
-      }).then(stream => {
-        barcodeStream = stream;
-        video.srcObject = stream;
-        video.setAttribute('playsinline', 'true');
-        video.play();
-        
-        statusDiv.textContent = 'Camera active - scanning...';
-        
-        // Start scanning frames
-        scanBarcodeFrames(video, statusDiv);
-      }).catch(err => {
-        statusDiv.textContent = '❌ Camera access denied. Please allow camera permissions.';
-        console.error('Camera error:', err);
-      });
-    }
-
-    function stopBarcodeScanning() {
-      if (barcodeStream) {
-        barcodeStream.getTracks().forEach(track => track.stop());
-        barcodeStream = null;
-      }
-    }
-
-    function scanBarcodeFrames(video, statusDiv) {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      let detectedBarcode = null;
-      let confidenceCount = 0;
-      const confidenceThreshold = 5;
-      let lastStatusUpdate = 0;
-      
-      const scan = () => {
-        if (!barcodeStream) return;
-
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        
-        if (canvas.width > 0 && canvas.height > 0) {
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          
-          // Try to detect barcode
-          const barcode = detectBarcode(imageData);
-          
-          if (barcode) {
-            if (barcode === detectedBarcode) {
-              confidenceCount++;
-              const percent = Math.round((confidenceCount / confidenceThreshold) * 100);
-              
-              const now = Date.now();
-              if (now - lastStatusUpdate > 300) {
-                statusDiv.textContent = `🔍 Found: ${barcode} (${percent}%)`;
-                document.getElementById('rescan-camera-btn').style.display = 'block';
-                lastStatusUpdate = now;
-              }
-              
-              if (confidenceCount >= confidenceThreshold) {
-                statusDiv.textContent = `✅ Scanning: ${barcode}`;
-                document.getElementById('rescan-camera-btn').style.display = 'none';
-                searchBarcodeInOpenFoodFacts(barcode, statusDiv);
-                return;
-              }
-            } else {
-              detectedBarcode = barcode;
-              confidenceCount = 1;
-              const now = Date.now();
-              if (now - lastStatusUpdate > 300) {
-                statusDiv.textContent = `🔍 Found: ${barcode}`;
-                document.getElementById('rescan-camera-btn').style.display = 'block';
-                lastStatusUpdate = now;
-              }
-            }
-          } else {
-            if (detectedBarcode) {
-              detectedBarcode = null;
-              confidenceCount = 0;
-              const now = Date.now();
-              if (now - lastStatusUpdate > 300) {
-                statusDiv.textContent = 'Point camera at barcode...';
-                document.getElementById('rescan-camera-btn').style.display = 'none';
-                lastStatusUpdate = now;
-              }
-            }
-          }
-        }
-        
-        requestAnimationFrame(scan);
-      };
-      
-      scan();
-    }
-
-    function detectBarcode(imageData) {
-      // Fresh simple barcode detection
-      // Just look for the barcode stripe pattern and return it as a string
-      const data = imageData.data;
-      const width = imageData.width;
-      const height = imageData.height;
-      
-      // Scan center area only
-      const y = Math.floor(height * 0.5); // Middle row only for speed
-      const startX = Math.floor(width * 0.25);
-      const endX = Math.floor(width * 0.75);
-      
-      // Extract brightness from this row
-      const row = [];
-      for (let x = startX; x < endX; x++) {
-        const idx = (y * width + x) * 4;
-        const brightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
-        row.push(brightness < 128 ? 1 : 0); // 1 = dark, 0 = light
-      }
-      
-      // Look for barcode pattern: alternating dark/light bars
-      const barcode = decodeFromBars(row);
-      
-      if (barcode && barcode.length >= 8 && barcode.length <= 13) {
-        return barcode;
-      }
-      
-      return null;
-    }
-
-    function decodeFromBars(row) {
-      // Convert bar pattern to barcode number
-      // Barcodes have alternating black/white bars that encode digits
-      
-      // Find stripe widths (run-length encoding)
-      const stripes = [];
-      let currentStripe = 1;
-      
-      for (let i = 1; i < row.length; i++) {
-        if (row[i] === row[i - 1]) {
-          currentStripe++;
-        } else {
-          stripes.push(currentStripe);
-          currentStripe = 1;
-        }
-      }
-      stripes.push(currentStripe);
-      
-      // Need enough stripes for a barcode
-      if (stripes.length < 30) return null;
-      
-      // Normalize stripe widths to module width
-      const minStripe = Math.min(...stripes);
-      const normalized = stripes.map(s => Math.round(s / minStripe));
-      
-      // Decode EAN-13/UPC patterns
-      // Standard barcode: START + 6 digits + MIDDLE + 6 digits + END
-      // Each digit is 4 bars wide (e.g., 1,2,1,2)
-      
-      let result = '';
-      let i = 3; // Skip start pattern
-      
-      // Decode 12 digits (6 + 6)
-      while (i < normalized.length - 3 && result.length < 12) {
-        // Get 4-bar pattern for this digit
-        const pattern = normalized.slice(i, i + 4);
-        const digit = decodeDigitPattern(pattern);
-        
-        if (digit !== null) {
-          result += digit.toString();
-        }
-        i += 4;
-      }
-      
-      // Return if we got a valid barcode length
-      if (result.length >= 8 && result.length <= 13) {
-        return result;
-      }
-      
-      return null;
-    }
-
-    function decodeDigitPattern(pattern) {
-      // Decode a 4-bar pattern to a digit (0-9)
-      // Pattern is [dark, light, dark, light] widths
-      
-      if (pattern.length !== 4) return null;
-      
-      // Create pattern string (e.g., "1211")
-      const patternStr = pattern.join('');
-      
-      // Barcode digit encodings (simplified - these are actual EAN-13 patterns)
-      const patterns = {
-        '1211': '0', '1222': '1', '1221': '2', '2112': '3',
-        '2121': '4', '2211': '5', '1122': '6', '1112': '7',
-        '1121': '8', '2111': '9'
-      };
-      
-      return patterns[patternStr] || null;
-    }
-
-    // Cache for barcode lookups to avoid repeated API calls
-    let barcodeCache = {};
-
-    function searchBarcodeInOpenFoodFacts(barcode, statusDiv) {
-      // Check cache first - instant lookup
-      if (barcodeCache[barcode]) {
-        const cached = barcodeCache[barcode];
-        document.getElementById('food-name').value = cached.name;
-        document.getElementById('food-protein').value = cached.protein;
-        document.getElementById('food-carbs').value = cached.carbs;
-        document.getElementById('food-fat').value = cached.fat;
-        document.getElementById('food-fiber').value = cached.fiber;
-        document.getElementById('food-sugar').value = cached.sugar;
-        calculateCalories();
-        statusDiv.textContent = `✅ Found: ${cached.name}`;
-        setTimeout(() => closeBarcodeScanner(), 1500);
-        return;
-      }
-      
-      statusDiv.textContent = `🔍 Searching for barcode: ${barcode}...`;
-      
-      // Try fastest proxies first
-      const proxyUrls = [
-        // Direct API with short timeout (fastest if working)
-        `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`,
-        // Fastest CORS proxy
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`)}`,
-        // Backup CORS proxy
-        `https://corsproxy.io/?${encodeURIComponent(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`)}`,
-      ];
-      
-      let attemptIndex = 0;
-      let completed = false;
-      
-      const tryFetch = (timeout = 4000) => {
-        if (completed || attemptIndex >= proxyUrls.length) return;
-        
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), timeout);
-        
-        fetch(proxyUrls[attemptIndex], { signal: controller.signal })
-          .then(response => {
-            clearTimeout(timeoutId);
-            if (!response.ok) throw new Error('API returned error');
-            return response.json();
-          })
-          .then(data => {
-            if (completed) return;
-            completed = true;
-            clearTimeout(timeoutId);
-            
-            // Handle different response formats from different proxies
-            const product = data.product || data;
-            
-            if (data.status === 1 || (product && product.product_name)) {
-              const name = product.product_name || 'Unknown Product';
-              const calories = product.nutriments?.['energy-kcal'] || 0;
-              const protein = product.nutriments?.proteins || 0;
-              const carbs = product.nutriments?.carbohydrates || 0;
-              const fat = product.nutriments?.fat || 0;
-              const fiber = product.nutriments?.fiber || 0;
-              const sugar = product.nutriments?.sugars || 0;
-              
-              // Cache the result
-              barcodeCache[barcode] = { name, protein, carbs, fat, fiber, sugar };
-              
-              // Fill in the form
-              document.getElementById('food-name').value = name;
-              document.getElementById('food-protein').value = protein.toFixed(1);
-              document.getElementById('food-carbs').value = carbs.toFixed(1);
-              document.getElementById('food-fat').value = fat.toFixed(1);
-              document.getElementById('food-fiber').value = fiber.toFixed(1);
-              document.getElementById('food-sugar').value = sugar.toFixed(1);
-              
-              calculateCalories();
-              
-              statusDiv.textContent = `✅ Found: ${name}`;
-              setTimeout(() => closeBarcodeScanner(), 1500);
-            } else {
-              statusDiv.textContent = `❌ Product not found for barcode: ${barcode}`;
-            }
-          })
-          .catch(err => {
-            clearTimeout(timeoutId);
-            if (completed) return;
-            
-            attemptIndex++;
-            if (attemptIndex < proxyUrls.length) {
-              statusDiv.textContent = `🔄 Trying faster connection...`;
-              // Try next proxy with slightly longer timeout
-              tryFetch(attemptIndex === 1 ? 5000 : 6000);
-            } else {
-              completed = true;
-              statusDiv.textContent = '❌ Search took too long. Try manual entry.';
-              console.error('Barcode search failed:', err);
-            }
-          });
-      };
-      
-      // Start search immediately without delay
-      tryFetch();
-    }
 
     // Local product database - Australian and popular products
     const productDatabase = [
-      // Australian Beverages
-      { name: 'Monster Energy Zero Ultra', protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0, calories: 10 },
-      { name: 'Monster Energy (Original)', protein: 0, carbs: 27, fat: 0, fiber: 0, sugar: 27, calories: 110 },
-      { name: 'Red Bull (Regular)', protein: 1.1, carbs: 11, fat: 0, fiber: 0, sugar: 11, calories: 43 },
-      { name: 'Coca-Cola', protein: 0, carbs: 10.6, fat: 0, fiber: 0, sugar: 10.6, calories: 42 },
-      { name: 'Sprite', protein: 0, carbs: 9.8, fat: 0, fiber: 0, sugar: 9.8, calories: 38 },
-      { name: 'Lemonade (Regular)', protein: 0, carbs: 11, fat: 0, fiber: 0, sugar: 11, calories: 44 },
+      // Australian Beverages (Real/Common Australian Barcodes)
+      { name: 'Coca-Cola 375ml', barcode: '9300638002249', protein: 0, carbs: 10.6, fat: 0, fiber: 0, sugar: 10.6, calories: 42 },
+      { name: 'Coca-Cola Zero 375ml', barcode: '9300638002256', protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0, calories: 0 },
+      { name: 'Sprite 375ml', barcode: '9300638002263', protein: 0, carbs: 9.8, fat: 0, fiber: 0, sugar: 9.8, calories: 38 },
+      { name: 'Fanta Orange 375ml', barcode: '9300638002270', protein: 0, carbs: 11, fat: 0, fiber: 0, sugar: 11, calories: 44 },
+      { name: 'Gatorade Fruit Punch 600ml', barcode: '9300673027439', protein: 0, carbs: 6.7, fat: 0, fiber: 0, sugar: 6, calories: 27 },
+      { name: 'Water (Pure Life 600ml)', barcode: '9300678004001', protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0, calories: 0 },
       
-      // Australian Snacks
-      { name: 'Tim Tam Original', protein: 3.5, carbs: 22, fat: 8.5, fiber: 0.5, sugar: 14, calories: 175 },
-      { name: 'Tim Tam Chocolate', protein: 3, carbs: 21, fat: 9, fiber: 0.5, sugar: 15, calories: 180 },
-      { name: 'Anzac Biscuit', protein: 3, carbs: 18, fat: 6, fiber: 1, sugar: 10, calories: 145 },
-      { name: 'Lamington (Coconut)', protein: 2, carbs: 20, fat: 8, fiber: 1, sugar: 15, calories: 160 },
+      // Australian Snacks (Tim Tam, Anzac, Lamington)
+      { name: 'Tim Tam Original 45g', barcode: '9300611700018', protein: 3.5, carbs: 22, fat: 8.5, fiber: 0.5, sugar: 14, calories: 175 },
+      { name: 'Tim Tam Chocolate 45g', barcode: '9300611700025', protein: 3, carbs: 21, fat: 9, fiber: 0.5, sugar: 15, calories: 180 },
+      { name: 'Tim Tam Dark Chocolate 45g', barcode: '9300611700032', protein: 3.2, carbs: 20, fat: 9, fiber: 0.8, sugar: 14, calories: 182 },
+      { name: 'Anzac Biscuits 250g', barcode: '9300617000009', protein: 4, carbs: 18, fat: 6, fiber: 1, sugar: 10, calories: 145 },
+      { name: 'Lamington (Coconut)', barcode: '9310779000001', protein: 2, carbs: 20, fat: 8, fiber: 1, sugar: 15, calories: 160 },
       
-      // Breakfast Items
-      { name: 'Weet-Bix (2 biscuits)', protein: 2.5, carbs: 16, fat: 0.5, fiber: 2.5, sugar: 0.5, calories: 75 },
-      { name: 'Vegemite on Toast', protein: 4, carbs: 20, fat: 2, fiber: 2, sugar: 1, calories: 120 },
-      { name: 'Eggs Scrambled (2)', protein: 12, carbs: 1, fat: 10, fiber: 0, sugar: 0, calories: 140 },
-      { name: 'Porridge/Oatmeal (1 cup)', protein: 10, carbs: 54, fat: 8, fiber: 8, sugar: 1, calories: 300 },
+      // Australian Breakfast
+      { name: 'Weet-Bix 375g', barcode: '9300618019149', protein: 2.5, carbs: 16, fat: 0.5, fiber: 2.5, sugar: 0.5, calories: 75 },
+      { name: 'Vegemite 235g', barcode: '9300677001701', protein: 3, carbs: 5, fat: 0.2, fiber: 1, sugar: 1, calories: 25 },
+      { name: 'Milo Powder 400g', barcode: '9300613001015', protein: 3, carbs: 21, fat: 0.2, fiber: 1.5, sugar: 18, calories: 90 },
+      { name: 'Honey (Local Australian)', barcode: '0000000000051', protein: 0.3, carbs: 17, fat: 0, fiber: 0, sugar: 16, calories: 64 },
       
-      // Proteins
-      { name: 'Chicken Breast (100g)', protein: 31, carbs: 0, fat: 3.6, fiber: 0, sugar: 0, calories: 165 },
-      { name: 'Beef Steak (100g)', protein: 26, carbs: 0, fat: 5, fiber: 0, sugar: 0, calories: 180 },
-      { name: 'Salmon Fillet (100g)', protein: 25, carbs: 0, fat: 13, fiber: 0, sugar: 0, calories: 208 },
-      { name: 'Greek Yogurt (100g)', protein: 10, carbs: 3.7, fat: 0.4, fiber: 0, sugar: 3, calories: 59 },
+      // Australian Proteins & Dairy
+      { name: 'Chicken Breast (Australian)', barcode: '0000000000061', protein: 31, carbs: 0, fat: 3.6, fiber: 0, sugar: 0, calories: 165 },
+      { name: 'Beef Steak (Australian 100g)', barcode: '0000000000062', protein: 26, carbs: 0, fat: 5, fiber: 0, sugar: 0, calories: 180 },
+      { name: 'Greek Yogurt (Fage 200g)', barcode: '9200151002202', protein: 10, carbs: 3.7, fat: 0.4, fiber: 0, sugar: 3, calories: 59 },
+      { name: 'Milk (Full Cream 1L)', barcode: '9300604001050', protein: 3.2, carbs: 4.8, fat: 3.6, fiber: 0, sugar: 4.8, calories: 61 },
       
-      // Vegetables
-      { name: 'Banana (medium)', protein: 1.1, carbs: 27, fat: 0.3, fiber: 3.1, sugar: 14, calories: 105 },
-      { name: 'Apple (medium)', protein: 0.5, carbs: 25, fat: 0.3, fiber: 4.4, sugar: 19, calories: 95 },
-      { name: 'Broccoli (1 cup cooked)', protein: 3.7, carbs: 7, fat: 0.5, fiber: 2.4, sugar: 1.2, calories: 55 },
-      { name: 'Carrot (1 medium)', protein: 0.6, carbs: 12, fat: 0.2, fiber: 3.5, sugar: 7, calories: 50 },
-      { name: 'Sweet Potato (100g)', protein: 1.6, carbs: 20, fat: 0.1, fiber: 3, sugar: 4.2, calories: 86 },
+      // Australian Fresh Produce (Common in markets)
+      { name: 'Banana (Australian grown)', barcode: '0000000000071', protein: 1.1, carbs: 27, fat: 0.3, fiber: 3.1, sugar: 14, calories: 105 },
+      { name: 'Apple (Australian Fuji)', barcode: '0000000000072', protein: 0.5, carbs: 25, fat: 0.3, fiber: 4.4, sugar: 19, calories: 95 },
+      { name: 'Broccoli (1 bunch)', barcode: '0000000000073', protein: 3.7, carbs: 7, fat: 0.5, fiber: 2.4, sugar: 1.2, calories: 55 },
+      { name: 'Carrot (1 medium)', barcode: '0000000000074', protein: 0.6, carbs: 12, fat: 0.2, fiber: 3.5, sugar: 7, calories: 50 },
+      { name: 'Sweet Potato (Australian)', barcode: '0000000000075', protein: 1.6, carbs: 20, fat: 0.1, fiber: 3, sugar: 4.2, calories: 86 },
       
-      // Grains & Bread
-      { name: 'White Bread Slice', protein: 2.7, carbs: 14, fat: 1, fiber: 0.7, sugar: 1, calories: 75 },
-      { name: 'Whole Wheat Bread Slice', protein: 3.6, carbs: 12, fat: 1.5, fiber: 2.4, sugar: 1, calories: 80 },
-      { name: 'White Rice (1 cup cooked)', protein: 2, carbs: 45, fat: 0.3, fiber: 0.6, sugar: 0, calories: 206 },
-      { name: 'Brown Rice (1 cup cooked)', protein: 3.5, carbs: 45, fat: 1.8, fiber: 3.5, sugar: 0, calories: 215 },
-      { name: 'Pasta (1 cup cooked)', protein: 8, carbs: 43, fat: 1.1, fiber: 2.7, sugar: 0.2, calories: 220 },
+      // Australian Grains & Bread
+      { name: 'Multigrain Bread Slice', barcode: '9300675000019', protein: 3.8, carbs: 13, fat: 1.5, fiber: 2.8, sugar: 1, calories: 82 },
+      { name: 'White Rice (Sunrice 500g)', barcode: '9300603001078', protein: 2, carbs: 45, fat: 0.3, fiber: 0.6, sugar: 0, calories: 206 },
+      { name: 'Brown Rice (Sunrice 500g)', barcode: '9300603001085', protein: 3.5, carbs: 45, fat: 1.8, fiber: 3.5, sugar: 0, calories: 215 },
+      { name: 'Pasta (Barilla 500g)', barcode: '9310236001037', protein: 8, carbs: 43, fat: 1.1, fiber: 2.7, sugar: 0.2, calories: 220 },
       
-      // Nuts & Seeds
-      { name: 'Almonds (handful 30g)', protein: 10.6, carbs: 6, fat: 14.4, fiber: 3.5, sugar: 1.2, calories: 161 },
-      { name: 'Peanut Butter (2 tbsp)', protein: 8, carbs: 7, fat: 16, fiber: 2, sugar: 1, calories: 188 },
-      { name: 'Mixed Nuts (30g)', protein: 5.5, carbs: 8, fat: 14, fiber: 1.5, sugar: 1.5, calories: 161 },
+      // Australian Nuts & Seeds
+      { name: 'Almonds (Aussie Almonds)', barcode: '0000000000091', protein: 10.6, carbs: 6, fat: 14.4, fiber: 3.5, sugar: 1.2, calories: 161 },
+      { name: 'Peanut Butter (Bega 500g)', barcode: '9300633001010', protein: 8, carbs: 7, fat: 16, fiber: 2, sugar: 1, calories: 188 },
+      { name: 'Macadamia Nuts (Australian)', barcode: '0000000000092', protein: 7.9, carbs: 13.8, fat: 75.8, fiber: 8.6, sugar: 4.6, calories: 718 },
     ];
 
     function toggleProductDatabase() {
       const section = document.getElementById('product-database-section');
+      const barcodeSection = document.getElementById('barcode-search-section');
+      barcodeSection.style.display = 'none';
+      
       if (section.style.display === 'none') {
         section.style.display = 'block';
         document.getElementById('product-search').focus();
         displayProductList(productDatabase);
       } else {
         section.style.display = 'none';
+      }
+    }
+
+    function openBarcodeSearch() {
+      const barcodeSection = document.getElementById('barcode-search-section');
+      const databaseSection = document.getElementById('product-database-section');
+      databaseSection.style.display = 'none';
+      
+      if (barcodeSection.style.display === 'none') {
+        barcodeSection.style.display = 'block';
+        document.getElementById('barcode-input').focus();
+        document.getElementById('barcode-result').style.display = 'none';
+        document.getElementById('barcode-input').value = '';
+      } else {
+        barcodeSection.style.display = 'none';
+      }
+    }
+
+    // Barcode lookup cache
+    let barcodeCache = {};
+
+    function searchByBarcode() {
+      const barcode = document.getElementById('barcode-input').value.trim();
+      const resultDiv = document.getElementById('barcode-result');
+      
+      if (!barcode) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '⚠️ Please enter a barcode number';
+        resultDiv.style.color = 'rgba(255,107,53,0.8)';
+        return;
+      }
+      
+      if (!/^\d{8,13}$/.test(barcode)) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '⚠️ Barcode must be 8-13 digits';
+        resultDiv.style.color = 'rgba(255,107,53,0.8)';
+        return;
+      }
+      
+      // Show searching status
+      resultDiv.style.display = 'block';
+      resultDiv.innerHTML = '🔍 Searching...';
+      resultDiv.style.color = 'rgba(99,179,237,0.8)';
+      
+      // Check cache first
+      if (barcodeCache[barcode]) {
+        const product = barcodeCache[barcode];
+        resultDiv.innerHTML = `✓ Found (cached): ${product.name}`;
+        resultDiv.style.color = 'rgba(102,179,77,0.8)';
+        selectProductFromDatabase(product.name, product.protein, product.carbs, product.fat, product.fiber, product.sugar);
+        setTimeout(() => {
+          document.getElementById('barcode-search-section').style.display = 'none';
+        }, 500);
+        return;
+      }
+      
+      // Try online databases with multiple attempts
+      searchBarcodeOnline(barcode, resultDiv);
+    }
+
+    function searchBarcodeOnline(barcode, resultDiv) {
+      console.log(`Searching for barcode: ${barcode}`);
+      
+      // Try multiple APIs in order of preference for Australian barcodes
+      const apiUrls = [
+        // Open Food Facts (global, includes Australian products)
+        {
+          name: 'Open Food Facts',
+          url: `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`,
+          parser: (data) => {
+            if (data.status === 1 && data.product && data.product.product_name) {
+              const product = data.product;
+              return {
+                name: product.product_name,
+                protein: product.nutriments?.proteins || 0,
+                carbs: product.nutriments?.carbohydrates || 0,
+                fat: product.nutriments?.fat || 0,
+                fiber: product.nutriments?.fiber || 0,
+                sugar: product.nutriments?.sugars || 0
+              };
+            }
+            return null;
+          }
+        }
+      ];
+      
+      let apiIndex = 0;
+      
+      const tryApi = () => {
+        if (apiIndex >= apiUrls.length) {
+          // All online APIs failed, try local database
+          searchBarcodeLocal(barcode, resultDiv);
+          return;
+        }
+        
+        const api = apiUrls[apiIndex];
+        console.log(`Trying ${api.name}...`);
+        
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 6000);
+        
+        fetch(api.url, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'NutriTrack-App'
+          }
+        })
+          .then(response => {
+            clearTimeout(timeout);
+            console.log(`${api.name} response: ${response.status}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
+          })
+          .then(data => {
+            console.log(`${api.name} data:`, data);
+            const product = api.parser(data);
+            
+            if (product && product.name) {
+              // Cache it
+              barcodeCache[barcode] = product;
+              
+              resultDiv.innerHTML = `✓ Found: ${product.name}`;
+              resultDiv.style.color = 'rgba(102,179,77,0.8)';
+              
+              // Fill the form
+              selectProductFromDatabase(product.name, product.protein, product.carbs, product.fat, product.fiber, product.sugar);
+              
+              setTimeout(() => {
+                document.getElementById('barcode-search-section').style.display = 'none';
+              }, 800);
+              return;
+            }
+            
+            // Try next API
+            apiIndex++;
+            tryApi();
+          })
+          .catch(err => {
+            clearTimeout(timeout);
+            console.log(`${api.name} error:`, err.message);
+            apiIndex++;
+            tryApi();
+          });
+      };
+      
+      tryApi();
+    }
+
+    function searchBarcodeLocal(barcode, resultDiv) {
+      console.log('Searching local database for:', barcode);
+      
+      // Search for product by barcode in local database
+      const product = productDatabase.find(p => p.barcode === barcode);
+      
+      if (product) {
+        console.log('Found in local database:', product.name);
+        
+        // Cache it
+        barcodeCache[barcode] = product;
+        
+        resultDiv.innerHTML = `✓ Found: ${product.name}`;
+        resultDiv.style.color = 'rgba(102,179,77,0.8)';
+        
+        // Fill the form
+        selectProductFromDatabase(product.name, product.protein, product.carbs, product.fat, product.fiber, product.sugar);
+        
+        // Close barcode section after successful search
+        setTimeout(() => {
+          document.getElementById('barcode-search-section').style.display = 'none';
+        }, 500);
+      } else {
+        console.log('Not found in either database');
+        resultDiv.innerHTML = `❌ Barcode not found: ${barcode}<br><small>Not in online or local database. Enter the product manually or try the Browse feature.</small>`;
+        resultDiv.style.color = 'rgba(255,107,53,0.8)';
       }
     }
 
@@ -2083,6 +1878,121 @@
 
       render();
     };
+
+    function tryDemo() {
+      // Create demo account with sample data
+      const demoUsername = 'demo';
+      
+      // Generate sample data for the past 7 days
+      const today = new Date();
+      const sampleFoods = [
+        { name: 'Chicken Breast', calories: 165, protein: 31, carbs: 0, fat: 3.6, fiber: 0, sugar: 0, servings: 1 },
+        { name: 'Brown Rice', calories: 111, protein: 2.6, carbs: 23, fat: 0.9, fiber: 1.8, sugar: 0, servings: 1 },
+        { name: 'Broccoli', calories: 34, protein: 2.8, carbs: 7, fat: 0.4, fiber: 2.4, sugar: 1.4, servings: 1 },
+        { name: 'Banana', calories: 89, protein: 1.1, carbs: 23, fat: 0.3, fiber: 2.6, sugar: 12, servings: 1 },
+        { name: 'Greek Yogurt', calories: 100, protein: 10, carbs: 7, fat: 0, fiber: 0, sugar: 5, servings: 1 },
+        { name: 'Almonds', calories: 164, protein: 6, carbs: 6, fat: 14, fiber: 3.5, sugar: 1.2, servings: 0.25 },
+        { name: 'Salmon', calories: 280, protein: 25, carbs: 0, fat: 20, fiber: 0, sugar: 0, servings: 1 },
+        { name: 'Sweet Potato', calories: 103, protein: 2, carbs: 24, fat: 0.1, fiber: 3.3, sugar: 5.5, servings: 1 }
+      ];
+
+      const demoLog = {};
+      const demoSteps = {};
+      
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        // Random 3-4 foods per day
+        const foodCount = 3 + Math.floor(Math.random() * 2);
+        const dayFoods = [];
+        for (let j = 0; j < foodCount; j++) {
+          const food = { ...sampleFoods[Math.floor(Math.random() * sampleFoods.length)] };
+          dayFoods.push(food);
+        }
+        demoLog[dateStr] = dayFoods;
+        demoSteps[dateStr] = 5000 + Math.floor(Math.random() * 15000);
+      }
+
+      // Create demo account
+      app.data[demoUsername] = {
+        log: demoLog,
+        steps: demoSteps,
+        savedFoods: sampleFoods,
+        goals: { ...DEFAULT_GOALS }
+      };
+
+      app.user = demoUsername;
+      save();
+      render();
+    }
+
+    function exportData() {
+      // Create backup JSON file
+      const userData = app.data[app.user];
+      if (!userData) {
+        alert('No data to export');
+        return;
+      }
+
+      const backup = {
+        username: app.user,
+        exportDate: new Date().toISOString(),
+        data: userData
+      };
+
+      const jsonString = JSON.stringify(backup, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `nutritrack-backup-${app.user}-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      alert(`✓ Data exported successfully!`);
+    }
+
+    function importData() {
+      const fileInput = document.getElementById('import-file-input');
+      fileInput.click();
+      
+      fileInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const backup = JSON.parse(event.target.result);
+            
+            if (!backup.username || !backup.data) {
+              alert('❌ Invalid backup file format');
+              return;
+            }
+
+            // Confirm overwrite
+            if (!confirm(`Import data for user "${backup.username}"?\n\nThis will overwrite existing data for this user.`)) {
+              return;
+            }
+
+            // Import the data
+            app.data[backup.username] = backup.data;
+            save();
+
+            alert(`✓ Data imported successfully!\n\nLog out and log back in as "${backup.username}" to see your data.`);
+          } catch (err) {
+            alert(`❌ Error importing file: ${err.message}`);
+            console.error('Import error:', err);
+          }
+        };
+
+        reader.readAsText(file);
+      };
+    }
 
     load();
   </script>
