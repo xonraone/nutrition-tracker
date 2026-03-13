@@ -472,12 +472,23 @@
         <div class="modal-title">Scan Barcode</div>
         <button class="modal-close" onclick="closeBarcodeScanner()">✕</button>
       </div>
-      <div id="barcode-scanner-container" style="width: 100%; height: 300px; background: #0a0a0a; border-radius: 12px; overflow: hidden; margin-bottom: 12px; position: relative;">
+      <div id="barcode-scanner-container" style="width: 100%; height: 300px; background: #0a0a0a; border-radius: 12px; overflow: hidden; margin-bottom: 12px; position: relative; display: block;">
         <video id="barcode-video" style="width: 100%; height: 100%; object-fit: cover;"></video>
         <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 3px solid rgba(255,107,53,0.5); width: 80%; aspect-ratio: 1; border-radius: 12px;"></div>
       </div>
       <div id="barcode-status" style="text-align: center; color: rgba(255,255,255,0.6); font-size: 13px; margin-bottom: 12px;">Point camera at barcode...</div>
-      <button type="button" onclick="closeBarcodeScanner()" style="width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); border-radius: 10px; padding: 10px; font-weight: 600;">Close Scanner</button>
+      
+      <div id="manual-entry-section" style="display: none; margin-bottom: 12px;">
+        <label class="form-label">Enter Barcode Manually</label>
+        <input type="text" id="manual-barcode-input" class="input-field" placeholder="Enter barcode numbers..." style="margin-bottom: 8px;">
+        <button type="button" onclick="searchManualBarcode()" style="width: 100%; background: rgba(99,179,237,0.15); border: 1px solid rgba(99,179,237,0.3); color: #63B3ED; border-radius: 10px; padding: 10px; font-weight: 600; margin-bottom: 8px;">🔍 Search</button>
+      </div>
+      
+      <div style="display: flex; gap: 8px;">
+        <button type="button" onclick="toggleManualEntry()" id="manual-entry-toggle" style="flex: 1; background: rgba(255,107,53,0.15); border: 1px solid rgba(255,107,53,0.3); color: #FF6B35; border-radius: 10px; padding: 10px; font-weight: 600; cursor: pointer;">✏️ Manual Entry</button>
+        <button type="button" onclick="rescanBarcode()" id="rescan-btn" style="flex: 1; background: rgba(99,179,237,0.15); border: 1px solid rgba(99,179,237,0.3); color: #63B3ED; border-radius: 10px; padding: 10px; font-weight: 600; cursor: pointer; display: none;">🔄 Rescan</button>
+      </div>
+      <button type="button" onclick="closeBarcodeScanner()" style="width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); border-radius: 10px; padding: 10px; font-weight: 600; margin-top: 8px;">Close Scanner</button>
     </div>
   </div>
 
@@ -1127,6 +1138,54 @@
       stopBarcodeScanning();
     }
 
+    function toggleManualEntry() {
+      const manualSection = document.getElementById('manual-entry-section');
+      const scannerContainer = document.getElementById('barcode-scanner-container');
+      const toggleBtn = document.getElementById('manual-entry-toggle');
+      const rescanBtn = document.getElementById('rescan-btn');
+      
+      if (manualSection.style.display === 'none') {
+        // Show manual entry, hide scanner
+        manualSection.style.display = 'block';
+        scannerContainer.style.display = 'none';
+        toggleBtn.textContent = '📷 Camera Scan';
+        toggleBtn.style.background = 'rgba(99,179,237,0.15)';
+        toggleBtn.style.color = '#63B3ED';
+        toggleBtn.style.borderColor = 'rgba(99,179,237,0.3)';
+        rescanBtn.style.display = 'none';
+        stopBarcodeScanning();
+        document.getElementById('manual-barcode-input').focus();
+      } else {
+        // Show scanner, hide manual entry
+        manualSection.style.display = 'none';
+        scannerContainer.style.display = 'block';
+        toggleBtn.textContent = '✏️ Manual Entry';
+        toggleBtn.style.background = 'rgba(255,107,53,0.15)';
+        toggleBtn.style.color = '#FF6B35';
+        toggleBtn.style.borderColor = 'rgba(255,107,53,0.3)';
+        rescanBtn.style.display = 'block';
+        startBarcodeScanning();
+      }
+    }
+
+    function rescanBarcode() {
+      document.getElementById('barcode-status').textContent = 'Point camera at barcode...';
+      stopBarcodeScanning();
+      startBarcodeScanning();
+    }
+
+    function searchManualBarcode() {
+      const barcode = document.getElementById('manual-barcode-input').value.trim();
+      const statusDiv = document.getElementById('barcode-status');
+      
+      if (!barcode) {
+        statusDiv.textContent = '❌ Please enter a barcode number';
+        return;
+      }
+      
+      searchBarcodeInOpenFoodFacts(barcode, statusDiv);
+    }
+
     let barcodeStream = null;
     let barcodeWorker = null;
 
@@ -1239,7 +1298,11 @@
     function searchBarcodeInOpenFoodFacts(barcode, statusDiv) {
       statusDiv.textContent = `🔍 Searching for barcode: ${barcode}...`;
       
-      fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`)
+      // Use CORS proxy to bypass browser restrictions
+      const corsProxy = 'https://cors-anywhere.herokuapp.com/';
+      const apiUrl = `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`;
+      
+      fetch(corsProxy + apiUrl)
         .then(response => response.json())
         .then(data => {
           if (data.status === 1 && data.product) {
