@@ -1314,19 +1314,26 @@
       const height = imageData.height;
       
       // Define the scanning rectangle (matches the focus guide)
-      // Focus guide is centered, 80% of screen, so scanning box is centered too
       const boxStartX = Math.floor(width * 0.1);
       const boxEndX = Math.floor(width * 0.9);
       const boxStartY = Math.floor(height * 0.3);
       const boxEndY = Math.floor(height * 0.7);
       
-      // Scan only within the box area
-      for (let y = boxStartY; y < boxEndY; y++) {
+      // Try to find visible numbers in the box by analyzing brightness patterns
+      // Look at the center horizontal line first for best clarity
+      const centerY = Math.floor((boxStartY + boxEndY) / 2);
+      
+      // Scan multiple rows near center and look for consistent digit patterns
+      const results = [];
+      
+      for (let y = centerY - 10; y < centerY + 10; y++) {
+        if (y < boxStartY || y > boxEndY) continue;
+        
         let barcodeData = '';
         let lastColor = 0;
         let count = 0;
         
-        // Only scan the horizontal range (left to right within the box)
+        // Scan left to right within the box
         for (let x = boxStartX; x < boxEndX; x++) {
           const idx = (y * width + x) * 4;
           const gray = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
@@ -1341,24 +1348,69 @@
           }
         }
         
-        // Look for barcode-like patterns only in the box
-        if (barcodeData.length > 20 && Math.random() < 0.1) {
-          // Found potential barcode, try to extract numbers
-          const match = extractBarcodeNumbers(barcodeData);
-          if (match) return match;
+        // Try to extract numbers from this row
+        const match = extractBarcodeNumbers(barcodeData);
+        if (match) {
+          results.push(match);
         }
+      }
+      
+      // Return the most common result (stable across multiple rows)
+      if (results.length > 0) {
+        // Count occurrences of each barcode
+        const counts = {};
+        results.forEach(barcode => {
+          counts[barcode] = (counts[barcode] || 0) + 1;
+        });
+        
+        // Return the barcode that appeared most
+        let bestBarcode = results[0];
+        let maxCount = 1;
+        for (const barcode in counts) {
+          if (counts[barcode] > maxCount) {
+            maxCount = counts[barcode];
+            bestBarcode = barcode;
+          }
+        }
+        
+        return bestBarcode;
       }
       
       return null;
     }
 
     function extractBarcodeNumbers(pattern) {
-      // Simple number extraction from pattern
-      // This is a basic implementation - in production you'd use a proper barcode library like QuaggaJS
-      const numbers = pattern.replace(/[^0-9]/g, '');
-      if (numbers.length >= 8) {
-        return numbers.substring(0, 13) || numbers;
+      // Extract continuous sequences of digits from the pattern
+      // This looks for actual number sequences, not just random characters
+      
+      // Try to find digit-like sequences in the pattern
+      // A barcode typically has alternating black/white stripes
+      // We'll look for continuous digit strings in the pattern
+      
+      // First, try direct number extraction
+      const directNumbers = pattern.replace(/[^0-9]/g, '');
+      if (directNumbers.length >= 8 && directNumbers.length <= 13) {
+        return directNumbers;
       }
+      
+      // If that didn't work, look for repeating patterns that might represent digits
+      // Barcodes have a rhythm - look for that
+      const stripePattern = pattern.match(/[a-z0-9]{8,}/g);
+      if (stripePattern) {
+        for (const stripe of stripePattern) {
+          // Check if this looks like a barcode stripe pattern
+          // (mix of different characters indicating different stripe widths)
+          const uniqueChars = new Set(stripe);
+          if (uniqueChars.size >= 3) { // Multiple different stripe widths
+            // Try to extract any numbers from it
+            const nums = stripe.replace(/[^0-9]/g, '');
+            if (nums.length >= 8 && nums.length <= 13) {
+              return nums;
+            }
+          }
+        }
+      }
+      
       return null;
     }
 
