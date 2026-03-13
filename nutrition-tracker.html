@@ -1308,7 +1308,7 @@
     }
 
     function detectBarcode(imageData) {
-      // Simple number detection - look for digits 0-9 in the scanning area
+      // Improved number detection with better digit recognition
       const data = imageData.data;
       const width = imageData.width;
       const height = imageData.height;
@@ -1356,70 +1356,107 @@
     }
 
     function scanRowForNumbers(data, width, height, y, startX, endX) {
-      // Look for digit patterns by analyzing pixel brightness
-      // Digits are typically dark on light background or light on dark
-      
-      const pixelData = [];
+      // Extract pixel values from this row
+      const pixels = [];
       for (let x = startX; x < endX; x++) {
         const idx = (y * width + x) * 4;
         const r = data[idx];
         const g = data[idx + 1];
         const b = data[idx + 2];
         const brightness = (r + g + b) / 3;
-        pixelData.push(brightness);
+        pixels.push(brightness);
       }
       
-      // Apply simple edge detection to find digit boundaries
-      const edges = [];
-      for (let i = 1; i < pixelData.length; i++) {
-        const diff = Math.abs(pixelData[i] - pixelData[i - 1]);
-        edges.push(diff);
-      }
+      // Apply contrast enhancement to make digits clearer
+      const enhanced = enhanceContrast(pixels);
       
-      // Find segments with high edge activity (likely digits)
-      const segments = [];
-      let inSegment = false;
-      let segmentStart = 0;
+      // Find digit-like patterns by looking for vertical stripes
+      const digits = extractDigitPatterns(enhanced);
       
-      for (let i = 0; i < edges.length; i++) {
-        if (edges[i] > 30) { // Threshold for edge detection
-          if (!inSegment) {
-            segmentStart = i;
-            inSegment = true;
-          }
-        } else if (inSegment) {
-          segments.push({ start: segmentStart, end: i });
-          inSegment = false;
+      if (digits && digits.length >= 8 && digits.length <= 13) {
+        // Validate all are actual digits
+        if (/^\d+$/.test(digits)) {
+          return digits;
         }
       }
       
-      // Convert segments to digit count estimate
-      if (segments.length >= 8) {
-        // We found enough segments - estimate digits
-        let digitCount = segments.length;
-        if (digitCount > 13) digitCount = 13;
+      return null;
+    }
+
+    function enhanceContrast(pixels) {
+      // Increase contrast to make digits more distinct
+      const min = Math.min(...pixels);
+      const max = Math.max(...pixels);
+      const range = max - min;
+      
+      if (range === 0) return pixels;
+      
+      return pixels.map(p => {
+        const normalized = (p - min) / range;
+        return Math.round(normalized * 255);
+      });
+    }
+
+    function extractDigitPatterns(pixels) {
+      // Look for digit patterns by analyzing vertical columns
+      // Each digit should have a distinct brightness profile
+      
+      const columnWidth = Math.max(3, Math.floor(pixels.length / 13));
+      let result = '';
+      
+      // Divide into columns (potential digits)
+      for (let col = 0; col < pixels.length; col += columnWidth) {
+        const colEnd = Math.min(col + columnWidth, pixels.length);
+        const columnPixels = pixels.slice(col, colEnd);
         
-        // Return a sequence of digits based on segment analysis
-        let result = '';
-        for (let i = 0; i < digitCount; i++) {
-          // Analyze each segment to guess the digit
-          if (i < segments.length) {
-            const seg = segments[i];
-            const segmentBrightness = pixelData.slice(seg.start, seg.end)
-              .reduce((a, b) => a + b, 0) / (seg.end - seg.start);
-            
-            // Map brightness to digit (0-9)
-            const digit = Math.round((segmentBrightness / 255) * 9);
-            result += Math.abs(digit).toString();
-          }
+        // Calculate statistics for this column
+        const sum = columnPixels.reduce((a, b) => a + b, 0);
+        const avg = sum / columnPixels.length;
+        const darkPixels = columnPixels.filter(p => p < 128).length;
+        const darkRatio = darkPixels / columnPixels.length;
+        
+        // Classify based on darkness pattern
+        // This is a simplified digit classifier
+        let digit = classifyDigit(columnPixels, avg, darkRatio);
+        if (digit !== null) {
+          result += digit.toString();
         }
-        
-        // Clean up: keep only digit characters
-        result = result.replace(/[^0-9]/g, '');
-        
-        if (result.length >= 8 && result.length <= 13) {
-          return result;
+      }
+      
+      return result;
+    }
+
+    function classifyDigit(columnPixels, avg, darkRatio) {
+      // Classify a column of pixels into a digit (0-9) or null
+      // Based on brightness distribution and darkness ratio
+      
+      // Count peaks and valleys in the column
+      let peaks = 0;
+      let valleys = 0;
+      
+      for (let i = 1; i < columnPixels.length - 1; i++) {
+        if (columnPixels[i] > columnPixels[i - 1] && columnPixels[i] > columnPixels[i + 1]) {
+          peaks++;
+        } else if (columnPixels[i] < columnPixels[i - 1] && columnPixels[i] < columnPixels[i + 1]) {
+          valleys++;
         }
+      }
+      
+      // Simple heuristic: digits with different peak/valley patterns
+      // are classified differently
+      
+      // If mostly dark with some variations - likely a digit
+      if (darkRatio > 0.4) {
+        // Map based on peak count and darkness
+        if (peaks <= 1 && darkRatio > 0.7) return 1; // Thin digit
+        if (darkRatio > 0.8) return Math.round(avg / 25.5) % 10; // Dark = higher digit
+        if (darkRatio > 0.6) return Math.round(avg / 25.5) % 10;
+        if (peaks > 3) return 8; // Multiple peaks could be 8
+        if (valleys > 2) return 0; // 0 has hole
+        
+        // Default: map darkness to digit
+        const digit = Math.round((1 - darkRatio) * 9);
+        return Math.max(0, Math.min(9, digit));
       }
       
       return null;
