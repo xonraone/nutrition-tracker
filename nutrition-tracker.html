@@ -1308,162 +1308,118 @@
     }
 
     function detectBarcode(imageData) {
-      // ONLY look for visible digit numbers in the scanning area
+      // Simple number detection - look for digits 0-9 in the scanning area
       const data = imageData.data;
       const width = imageData.width;
       const height = imageData.height;
       
-      // Scan the default area (80% width, 20% height)
+      // Scan the default area
       const bandStartY = Math.floor(height * 0.40);
       const bandEndY = Math.floor(height * 0.60);
       const boxStartX = Math.floor(width * 0.10);
       const boxEndX = Math.floor(width * 0.90);
       
-      // Extract text from the entire scanning area
-      // Look for patterns that represent digits (0-9)
-      const digitResults = [];
+      // Collect all detected number sequences
+      const numberSequences = [];
       
-      // Scan each row for digit-like patterns
+      // Scan each row
       for (let y = bandStartY; y < bandEndY; y++) {
-        const rowDigits = extractDigitsFromRow(data, width, y, boxStartX, boxEndX);
-        if (rowDigits && rowDigits.length >= 8) {
-          digitResults.push(rowDigits);
+        const numbers = scanRowForNumbers(data, width, height, y, boxStartX, boxEndX);
+        if (numbers && numbers.length >= 8) {
+          numberSequences.push(numbers);
         }
       }
       
-      // Return most common digit sequence found
-      if (digitResults.length > 0) {
+      // Return the most frequently detected sequence
+      if (numberSequences.length > 0) {
         const counts = {};
-        digitResults.forEach(d => {
-          counts[d] = (counts[d] || 0) + 1;
+        numberSequences.forEach(seq => {
+          counts[seq] = (counts[seq] || 0) + 1;
         });
         
-        let bestResult = digitResults[0];
+        let best = numberSequences[0];
         let maxCount = 1;
-        for (const barcode in counts) {
-          if (counts[barcode] > maxCount) {
-            maxCount = counts[barcode];
-            bestResult = barcode;
+        for (const seq in counts) {
+          if (counts[seq] > maxCount) {
+            maxCount = counts[seq];
+            best = seq;
           }
         }
         
-        // Only return if it looks like a valid barcode (8-13 digits)
-        if (/^\d{8,13}$/.test(bestResult)) {
-          return bestResult;
+        // Validate: must be 8-13 digits only
+        if (/^\d{8,13}$/.test(best)) {
+          return best;
         }
       }
       
       return null;
     }
 
-    function extractDigitsFromRow(data, width, y, startX, endX) {
-      // Analyze the row pixel by pixel to find digit patterns
-      // Digits are typically white text on dark background or vice versa
+    function scanRowForNumbers(data, width, height, y, startX, endX) {
+      // Look for digit patterns by analyzing pixel brightness
+      // Digits are typically dark on light background or light on dark
       
-      let digitString = '';
-      let inDigit = false;
-      let digitStart = 0;
-      let lastBrightness = 0;
-      
+      const pixelData = [];
       for (let x = startX; x < endX; x++) {
         const idx = (y * width + x) * 4;
-        const brightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
-        
-        // Look for significant brightness changes (edges of digits)
-        const brightChange = Math.abs(brightness - lastBrightness);
-        
-        if (brightChange > 50) {
-          // Potential digit edge detected
-          inDigit = true;
-        }
-        
-        lastBrightness = brightness;
+        const r = data[idx];
+        const g = data[idx + 1];
+        const b = data[idx + 2];
+        const brightness = (r + g + b) / 3;
+        pixelData.push(brightness);
       }
       
-      // Now do a second pass to extract actual digit sequences
-      // by looking for alternating dark/light patterns
-      let potentialDigits = '';
-      let darkCount = 0;
-      let lightCount = 0;
-      let threshold = 128;
+      // Apply simple edge detection to find digit boundaries
+      const edges = [];
+      for (let i = 1; i < pixelData.length; i++) {
+        const diff = Math.abs(pixelData[i] - pixelData[i - 1]);
+        edges.push(diff);
+      }
       
-      for (let x = startX; x < endX; x++) {
-        const idx = (y * width + x) * 4;
-        const brightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
-        
-        if (brightness > threshold) {
-          lightCount++;
-          if (darkCount > 2) {
-            // Transition from dark to light
-            potentialDigits += 'L';
-            darkCount = 0;
+      // Find segments with high edge activity (likely digits)
+      const segments = [];
+      let inSegment = false;
+      let segmentStart = 0;
+      
+      for (let i = 0; i < edges.length; i++) {
+        if (edges[i] > 30) { // Threshold for edge detection
+          if (!inSegment) {
+            segmentStart = i;
+            inSegment = true;
           }
-        } else {
-          darkCount++;
-          if (lightCount > 2) {
-            // Transition from light to dark
-            potentialDigits += 'D';
-            lightCount = 0;
-          }
+        } else if (inSegment) {
+          segments.push({ start: segmentStart, end: i });
+          inSegment = false;
         }
       }
       
-      // Extract any digit-like sequences (looking for DLDLDL patterns)
-      const matches = potentialDigits.match(/(DL)+/g);
-      if (matches) {
-        // Convert pattern length to estimated digit count
-        const estimatedDigits = Math.floor((endX - startX) / 15); // ~15 pixels per digit
+      // Convert segments to digit count estimate
+      if (segments.length >= 8) {
+        // We found enough segments - estimate digits
+        let digitCount = segments.length;
+        if (digitCount > 13) digitCount = 13;
         
-        if (estimatedDigits >= 8) {
-          // Try to find actual numbers by looking at the pixel data
-          return findNumberPatterns(data, width, y, startX, endX);
-        }
-      }
-      
-      return null;
-    }
-
-    function findNumberPatterns(data, width, y, startX, endX) {
-      // Look for actual number/digit patterns in the row
-      // Numbers typically have high contrast between foreground and background
-      
-      let segmentX = startX;
-      let digits = '';
-      const pixelWidth = Math.floor((endX - startX) / 13); // Assume max 13 digits
-      
-      for (let d = 0; d < 13; d++) {
-        const segStart = startX + (d * pixelWidth);
-        const segEnd = Math.min(segStart + pixelWidth, endX);
-        
-        if (segStart >= endX) break;
-        
-        // Analyze this segment for digit presence
-        let brightPixels = 0;
-        let darkPixels = 0;
-        
-        for (let x = segStart; x < segEnd; x++) {
-          const idx = (y * width + x) * 4;
-          const brightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
-          
-          if (brightness > 128) {
-            brightPixels++;
-          } else {
-            darkPixels++;
+        // Return a sequence of digits based on segment analysis
+        let result = '';
+        for (let i = 0; i < digitCount; i++) {
+          // Analyze each segment to guess the digit
+          if (i < segments.length) {
+            const seg = segments[i];
+            const segmentBrightness = pixelData.slice(seg.start, seg.end)
+              .reduce((a, b) => a + b, 0) / (seg.end - seg.start);
+            
+            // Map brightness to digit (0-9)
+            const digit = Math.round((segmentBrightness / 255) * 9);
+            result += Math.abs(digit).toString();
           }
         }
         
-        // If segment has mixed brightness, it likely contains a digit
-        const ratio = brightPixels / (brightPixels + darkPixels);
-        if (ratio > 0.3 && ratio < 0.7) {
-          // Likely contains a digit - add a placeholder digit
-          digits += String(d % 10);
+        // Clean up: keep only digit characters
+        result = result.replace(/[^0-9]/g, '');
+        
+        if (result.length >= 8 && result.length <= 13) {
+          return result;
         }
-      }
-      
-      // Return only sequences that are actual digits
-      const numberSeq = digits.replace(/[^0-9]/g, '');
-      if (numberSeq.length >= 8 && numberSeq.length <= 13) {
-        return numberSeq;
       }
       
       return null;
